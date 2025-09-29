@@ -1,0 +1,92 @@
+{
+  "name": "mbiufun-new-frontend",
+  "version": "0.0.0",
+  "packageManager": "pnpm@9.8.0",
+  "engines": {
+    "node": ">=22.17.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "ng": "ng",
+    "config": "ts-node ./setenv.ts",
+    "start": "ng serve",
+    "build": "ng build --configuration production",
+    "deploy": "pnpm run build && firebase deploy --only hosting",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "build:test": "ng build --configuration test",
+    "build:prod": "ng build --configuration production",
+    "postbuild:prod": "gulp compress_prod",
+    "postbuild:test": "gulp compress_test",
+    "preinstall": "npx only-allow pnpm"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^20.1.0",
+    "@angular/cdk": "^20.1.0",
+    "@angular/common": "^20.1.0",
+    "@angular/compiler": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@angular/fire": "^20.0.1",
+    "@angular/forms": "^20.1.0",
+    "@angular/material": "^20.1.0",
+    "@angular/platform-browser": "^20.1.0",
+    "@angular/platform-browser-dynamic": "^20.1.0",
+    "@angular/router": "^20.1.0",
+    "@angular/service-worker": "^20.1.0",
+    "@emailjs/browser": "^3.11.0",
+    "@fortawesome/angular-fontawesome": "^3.0.0",
+    "@fortawesome/fontawesome-svg-core": "^6.1.1",
+    "@fortawesome/free-brands-svg-icons": "^6.1.1",
+    "@fortawesome/free-solid-svg-icons": "^6.1.1",
+    "@popperjs/core": "^2.11.8",
+    "emailjs": "^4.0.3",
+    "firebase": "^11.0.1",
+    "hammerjs": "^2.0.8",
+    "jwt-decode": "^4.0.0",
+    "lodash": "^4.17.21",
+    "ngx-cookie-service": "^20.1.0",
+    "primeng": "^20.1.2",
+    "rxjs": "~7.8.0",
+    "subsink": "^1.0.2",
+    "tslib": "^2.3.0",
+    "uuid": "^11.0.2",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^20.1.0",
+    "@angular/build": "^20.1.2",
+    "@angular/cli": "^20.1.2",
+    "@angular/compiler-cli": "^20.1.0",
+    "@angular/localize": "^20.1.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.5",
+    "@types/node": "^20.19.17",
+    "autoprefixer": "^10.4.19",
+    "dotenv": "^16.3.1",
+    "gulp": "^4.0.2",
+    "gulp-gzip": "^1.4.2",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.8.2",
+    "yargs": "^17.7.2"
+  }
+}
