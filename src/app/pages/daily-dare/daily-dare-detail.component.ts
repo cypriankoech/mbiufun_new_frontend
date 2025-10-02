@@ -375,6 +375,7 @@ export class DailyDareDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dareService = inject(DailyDareService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   dare?: DailyDare;
   quiz?: QuizDare;
@@ -492,7 +493,7 @@ export class DailyDareDetailComponent implements OnInit {
     // Convert answers object to the format expected by backend
     // answers is Record<number, string> where key is question index, value is option_id
     const responses = Object.entries(this.answers).map(([questionIndex, optionId]) => {
-      const question = this.quiz?.questions[Number(questionIndex)];
+      const question = this.quiz?.questions?.[Number(questionIndex)];
       return {
         question_id: question?.id || 0,
         option_id: Number(optionId)
@@ -515,7 +516,7 @@ export class DailyDareDetailComponent implements OnInit {
         // Build selected answers map for the dialog
         const selectedAnswersMap: { [questionId: number]: number } = {};
         Object.entries(this.answers).forEach(([questionIndex, optionId]) => {
-          const question = this.quiz?.questions[Number(questionIndex)];
+          const question = this.quiz?.questions?.[Number(questionIndex)];
           if (question) {
             selectedAnswersMap[question.id] = Number(optionId);
           }
