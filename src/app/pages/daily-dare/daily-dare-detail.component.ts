@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { DailyDareService, QuizDare, DailyDare } from '@app/services/daily-dare.service';
+import { QuizResultsDialogComponent } from '@app/components/quiz-results-dialog.component';
 
 @Component({
   selector: 'app-daily-dare-detail',
@@ -488,55 +489,79 @@ export class DailyDareDetailComponent implements OnInit {
       return;
     }
 
-    const payload = { answers: this.answers, dare_id: this.quiz.id };
+    // Convert answers object to the format expected by backend
+    // answers is Record<number, string> where key is question index, value is option_id
+    const responses = Object.entries(this.answers).map(([questionIndex, optionId]) => {
+      const question = this.quiz?.questions[Number(questionIndex)];
+      return {
+        question_id: question?.id || 0,
+        option_id: Number(optionId)
+      };
+    });
+
+    const payload = { responses };
     this.submitting = true;
 
-    // TODO: Backend SubmitQuizView is not implemented, so simulate success for demo
     console.log('Submitting quiz answers:', payload);
 
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      this.submitting = false;
-
-      // Calculate a score based on correct answers (simulated)
-      const correctAnswers = Math.floor(Math.random() * (totalQuestions + 1)); // Random score for demo
-      this.isCompleted = true;
-      this.userScore = correctAnswers;
-
-      this.showResults({
-        type: 'quiz',
-        score: correctAnswers,
-        total: totalQuestions,
-        message: `Quiz completed successfully!`
-      });
-    }, 1500); // Simulate 1.5 second API call
-
-    // Uncomment below when backend SubmitQuizView is implemented:
-    /*
     this.dareService.submitQuizAnswers(payload).subscribe({
       next: (response: any) => {
+        console.log('Quiz submission response:', response);
         this.submitting = false;
         this.isCompleted = true;
-        const score = response?.score || 0;
-        this.userScore = score;
-        this.showResults({
-          type: 'quiz',
-          score: score,
-          total: totalQuestions,
-          message: `Quiz completed successfully!`
+        this.userScore = response.score || 0;
+        this.totalPossible = response.total_possible || totalQuestions;
+
+        // Build selected answers map for the dialog
+        const selectedAnswersMap: { [questionId: number]: number } = {};
+        Object.entries(this.answers).forEach(([questionIndex, optionId]) => {
+          const question = this.quiz?.questions[Number(questionIndex)];
+          if (question) {
+            selectedAnswersMap[question.id] = Number(optionId);
+          }
+        });
+
+        // Open results dialog with detailed feedback
+        this.dialog.open(QuizResultsDialogComponent, {
+          data: {
+            status: response.status || 'completed',
+            score: response.score || 0,
+            total_possible: response.total_possible || totalQuestions,
+            responses: response.responses || [],
+            questions: this.quiz?.questions || [],
+            selectedAnswers: selectedAnswersMap
+          },
+          width: '90vw',
+          maxWidth: '600px',
+          disableClose: false
+        }).afterClosed().subscribe(() => {
+          // After dialog closes, navigate back to dare list
+          this.router.navigate(['/app/daily-dare']);
         });
       },
-      error: () => {
+      error: (err) => {
+        console.error('Quiz submission error:', err);
         this.submitting = false;
-        this.snackBar.open('❌ Submission failed. Please try again.', 'Retry', {
-          duration: 4000,
-          panelClass: ['error-snackbar']
-        }).onAction().subscribe(() => {
-          this.submit();
-        });
+        
+        // Check for "already completed" error
+        if (err.status === 400 && err.error?.error?.includes('already completed')) {
+          this.snackBar.open('You\'ve already completed today\'s quiz!', 'OK', {
+            duration: 4000,
+            panelClass: ['error-snackbar']
+          });
+          setTimeout(() => {
+            this.router.navigate(['/app/daily-dare']);
+          }, 2000);
+        } else {
+          this.snackBar.open('❌ Submission failed. Please try again.', 'Retry', {
+            duration: 4000,
+            panelClass: ['error-snackbar']
+          }).onAction().subscribe(() => {
+            this.submit();
+          });
+        }
       }
     });
-    */
   }
 
   markAsCompleted() {
