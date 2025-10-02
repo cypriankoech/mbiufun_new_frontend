@@ -74,17 +74,26 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
 
         <!-- Hobby Selection -->
         <div>
-          <label for="hobby" class="block text-sm font-medium text-gray-700 mb-2">Choose a hobby (optional)</label>
+          <label for="hobby" class="block text-sm font-medium text-gray-700 mb-2">
+            Choose a hobby (optional)
+            <span *ngIf="hobbies.length === 0" class="text-xs text-gray-500 font-normal ml-2">
+              (No hobbies available - add vibes in your profile)
+            </span>
+          </label>
           <select
             id="hobby"
             [(ngModel)]="selectedHobbyId"
-            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#70AEB9] focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/20 transition-colors duration-200 bg-white"
+            [disabled]="hobbies.length === 0"
+            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#70AEB9] focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/20 transition-colors duration-200 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
-            <option [value]="null">No hobby</option>
+            <option [value]="null">{{ hobbies.length === 0 ? 'No hobbies selected yet' : 'No hobby' }}</option>
             <option *ngFor="let hobby of hobbies" [value]="hobby.id">
               {{ hobby.icon }} {{ hobby.name }}
             </option>
           </select>
+          <p *ngIf="hobbies.length === 0" class="mt-1 text-xs text-gray-500">
+            💡 Tip: Select your hobbies/vibes in your profile to tag posts
+          </p>
         </div>
 
         <!-- Image Upload -->
@@ -222,6 +231,7 @@ export class PostComposerComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to load hobbies:', error);
+        this.hobbies = [];
       }
     });
   }
@@ -281,6 +291,9 @@ export class PostComposerComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to check post count:', error);
+        // Default to allowing posts if API fails
+        this.activePostCount = 0;
+        this.postLimit = 5;
       }
     });
   }
@@ -294,6 +307,8 @@ export class PostComposerComponent implements OnInit {
     }
 
     this.isSubmitting = true;
+
+    // Submit post to backend
 
     this.feedService.createPost({
       caption: this.caption,
@@ -313,14 +328,24 @@ export class PostComposerComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to create post:', error);
-        const message = error.error?.detail || error.error?.message || 'Failed to create post';
-        this.snackBar.open(message, 'Close', {
+        this.isSubmitting = false;
+
+        // Show appropriate error message
+        let errorMessage = 'Unable to share post. Please check your connection and try again.';
+        if (error.status === 400 && error.error?.error) {
+          errorMessage = error.error.error;
+        } else if (error.status === 401) {
+          errorMessage = 'Session expired. Please log in again.';
+        } else if (error.status >= 500) {
+          errorMessage = 'Server temporarily unavailable. Please try again in a moment.';
+        }
+
+        this.snackBar.open(`❌ ${errorMessage}`, 'Close', {
           duration: 5000,
           horizontalPosition: 'center',
           verticalPosition: 'top',
           panelClass: ['error-snackbar']
         });
-        this.isSubmitting = false;
       }
     });
   }
@@ -360,3 +385,4 @@ export class PostComposerComponent implements OnInit {
     return this.caption.trim().length > 0 && this.caption.length <= 500;
   }
 }
+

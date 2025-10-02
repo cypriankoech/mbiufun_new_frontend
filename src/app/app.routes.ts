@@ -30,13 +30,15 @@ export const routes: Routes = [
     component: TemplateComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', component: ActivitiesComponent }, // Activities/Feed is now the home tab
-      { path: 'landing', component: LandingComponent }, // Keep old landing accessible
+      { path: '', component: LandingComponent }, // Landing is now the home/dashboard
+      { path: 'activities', component: ActivitiesComponent }, // Activities/Feed page
       { path: 'daily-dare', loadComponent: () => import('./pages/daily-dare/daily-dare.component').then(m => m.DailyDareComponent) },
+      { path: 'daily-dare/history', loadComponent: () => import('./pages/daily-dare/daily-dare-history.component').then(m => m.DailyDareHistoryComponent) },
       { path: 'daily-dare/:id', loadComponent: () => import('./pages/daily-dare/daily-dare-detail.component').then(m => m.DailyDareDetailComponent) },
       { path: 'groups', component: GroupsComponent },
+      { path: 'chat/:id', loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent) },
       { path: 'notifications', component: NotificationsComponent },
-      { path: 'tutorial', component: TutorialComponent },
+      { path: 'help', component: TutorialComponent },
       { path: 'profile/:user_id', component: ProfileComponent },
       { path: 'profile/:user_id/history', component: ProfileHistoryComponent },
       // Add more protected routes as needed

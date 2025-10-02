@@ -319,3 +319,62 @@ a.mbiu_like {
   background: rgba(0,0,0,0.5) !important;
   backdrop-filter: blur(2px);
 }
+
+/* Create Group Dialog Styles */
+.create-group-dialog-panel {
+  .mat-mdc-dialog-container {
+    border-radius: 1rem !important;
+    overflow: hidden;
+  }
+
+  @media (max-width: 640px) {
+    .mat-mdc-dialog-container {
+      border-radius: 0 !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+    }
+  }
+}
+
+/* Snackbar Styles */
+.success-snackbar {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.info-snackbar {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
+/* Custom Scrollbar Styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(209 213 219) rgb(243 244 246);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgb(243 244 246);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175);
+}

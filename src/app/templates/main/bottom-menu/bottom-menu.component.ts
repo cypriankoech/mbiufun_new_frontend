@@ -48,24 +48,37 @@ export class BottomMenuComponent {
     {
       href: '/app',
       icon: 'fa fa-home',
-      label: 'Feed'
-    },
-    {
-      href: '/app/daily-dare',
-      icon: 'fa fa-calendar-check',
-      label: 'Dares'
+      label: 'Home'
     },
     {
       href: '/app/groups',
-      icon: 'fa-solid fa-user-group',
-      label: 'Groups'
+      icon: 'fa-solid fa-users',
+      label: 'Bubble'
     },
     {
-      href: `/app/profile/${this.authService.currentUserValue?.id}/history`,
-      icon: 'fa fa-history',
-      label: 'History'
+      href: '/app/daily-dare',
+      icon: 'fa-solid fa-trophy',
+      label: 'Kumbu'
+    },
+    {
+      href: '/app/help',
+      icon: 'fa fa-question-circle',
+      label: 'Help'
     },
   ];
+
+  constructor() {
+    const userId = this.authService.currentUserValue?.id;
+    if (userId) {
+      const kumbuIndex = this.links.findIndex(l => l.label === 'Kumbu');
+      if (kumbuIndex !== -1) {
+        this.links[kumbuIndex] = {
+          ...this.links[kumbuIndex],
+          href: `/app/profile/${userId}/history`
+        };
+      }
+    }
+  }
 
   @Output() onClick: EventEmitter<{ label: string }> = new EventEmitter<{ label: string }>();
 }

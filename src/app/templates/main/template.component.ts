@@ -140,7 +140,7 @@ import { BottomMenuComponent } from './bottom-menu/bottom-menu.component';
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 px-3 py-2 bg-transparent border-0 shadow-none relative z-20" *ngIf="showBottomNav" role="navigation" aria-label="Bottom navigation" style="padding-bottom: env(safe-area-inset-bottom)">
+    <nav class="fixed bottom-0 left-0 right-0 px-3 py-2 bg-transparent border-0 shadow-none z-50" *ngIf="showBottomNav" role="navigation" aria-label="Bottom navigation" style="padding-bottom: env(safe-area-inset-bottom)">
       <app-bottom-menu></app-bottom-menu>
     </nav>
   `,

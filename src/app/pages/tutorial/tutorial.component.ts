@@ -11,13 +11,13 @@ import { Subscription } from 'rxjs';
     <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold text-gray-800 mb-2">Help & Tutorials</h1>
-          <p class="text-gray-600">Learn how to make the most of Mbiufun</p>
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">Help Center</h1>
+          <p class="text-gray-600">Get help and learn how to make the most of Mbiufun</p>
         </div>
 
         <div *ngIf="isLoading" class="text-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#70AEB9] mx-auto"></div>
-          <p class="mt-4 text-gray-600">Loading tutorials...</p>
+          <p class="mt-4 text-gray-600">Loading help content...</p>
         </div>
 
         <div *ngIf="!isLoading" class="space-y-6">
@@ -184,10 +184,11 @@ export class TutorialComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     // TODO: Add analytics logging
     // await this.analytics.logEvent('page_view', {"component": "TutorialComponent"});
-    
+
+    // Show loading for a very short time to demonstrate the loading state
     setTimeout(() => {
       this.isLoading = false;
-    }, 500);
+    }, 100);
   }
 
   openTutorial(tutorial: any): void {

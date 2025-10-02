@@ -1,23 +1,78 @@
 import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
 import { FeedService, FeedPost, UnifiedFeedResponse } from '@app/services/feed.service';
+import { AuthenticationService } from '@app/services/authentication.service';
 import { PostComposerComponent } from '@app/components/post-composer/post-composer.component';
 import { FeedCardComponent } from '@app/components/feed-card/feed-card.component';
 
 @Component({
   selector: 'app-activities',
   standalone: true,
-  imports: [CommonModule, PostComposerComponent, FeedCardComponent],
+  imports: [CommonModule, FormsModule, RouterModule, PostComposerComponent, FeedCardComponent],
   template: `
     <div class="min-h-full pb-6">
-      <!-- Page Header -->
-      <div class="mb-4 sm:mb-6">
-        <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57] mb-2">Your Feed</h1>
-        <p class="text-gray-600">Hobbies you love and friends you follow</p>
+      <!-- Simple Page Title -->
+      <div class="mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57]">Vibes & Activities</h1>
+        <p class="text-gray-600 text-sm mt-1">Discover and share activities with your community</p>
+      </div>
+
+
+      <!-- Filter Chips for Feed -->
+      <div class="mb-6 relative z-10">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Filter by Hobby</h2>
+          <span *ngIf="selectedFilter !== null" class="text-xs text-gray-500">
+            {{ getFilteredPostsCount() }} posts
+          </span>
+        </div>
+        <div
+          *ngIf="hobbies.length > 0 && !noHobbiesSelected"
+          class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          role="tablist"
+          aria-label="Feed filters"
+        >
+          <button
+            (click)="selectFilter(null)"
+            [class.bg-gradient-to-r]="selectedFilter === null"
+            [class.from-[#70AEB9]]="selectedFilter === null"
+            [class.to-[#4ECDC4]]="selectedFilter === null"
+            [class.text-white]="selectedFilter === null"
+            [class.shadow-md]="selectedFilter === null"
+            [class.scale-105]="selectedFilter === null"
+            [class.bg-white]="selectedFilter !== null"
+            [class.text-gray-700]="selectedFilter !== null"
+            class="flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm border border-gray-200 transition-all duration-200 hover:border-[#70AEB9] hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+            role="tab"
+            [attr.aria-selected]="selectedFilter === null"
+          >
+            All
+          </button>
+          <button
+            *ngFor="let hobby of hobbies"
+            (click)="selectFilter(hobby.id)"
+            [class.bg-gradient-to-r]="selectedFilter === hobby.id"
+            [class.from-[#70AEB9]]="selectedFilter === hobby.id"
+            [class.to-[#4ECDC4]]="selectedFilter === hobby.id"
+            [class.text-white]="selectedFilter === hobby.id"
+            [class.shadow-md]="selectedFilter === hobby.id"
+            [class.scale-105]="selectedFilter === hobby.id"
+            [class.bg-white]="selectedFilter !== hobby.id"
+            [class.text-gray-700]="selectedFilter !== hobby.id"
+            class="flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm border border-gray-200 transition-all duration-200 hover:border-[#70AEB9] hover:scale-105 active:scale-95 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 max-w-[180px]"
+            role="tab"
+            [attr.aria-selected]="selectedFilter === hobby.id"
+          >
+            <span *ngIf="hobby.icon" class="text-base flex-shrink-0">{{ hobby.icon }}</span>
+            <span class="truncate">{{ hobby.name }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- New Posts Notification -->
@@ -27,7 +82,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
         role="status"
         aria-live="polite"
       >
-        <button
+            <button 
           (click)="loadNewPosts()"
           class="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
         >
@@ -35,8 +90,8 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
           </svg>
           New posts available • Tap to refresh
-        </button>
-      </div>
+            </button>
+          </div>
 
       <!-- Offline Banner -->
       <div
@@ -48,7 +103,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
         </svg>
         <span>You're offline. Showing cached posts.</span>
-      </div>
+              </div>
 
       <!-- Post Composer -->
       <app-post-composer
@@ -56,46 +111,6 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
         (postCreated)="onPostCreated()"
       ></app-post-composer>
 
-      <!-- Filter Chips -->
-      <div
-        *ngIf="hobbies.length > 0 && !noHobbiesSelected"
-        class="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
-        role="tablist"
-        aria-label="Feed filters"
-      >
-        <button
-          (click)="selectFilter(null)"
-          [class.bg-gradient-to-r]="selectedFilter === null"
-          [class.from-[#70AEB9]]="selectedFilter === null"
-          [class.to-[#4ECDC4]]="selectedFilter === null"
-          [class.text-white]="selectedFilter === null"
-          [class.bg-gray-100]="selectedFilter !== null"
-          [class.text-gray-700]="selectedFilter !== null"
-          [class.hover:bg-gray-200]="selectedFilter !== null"
-          class="flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
-          role="tab"
-          [attr.aria-selected]="selectedFilter === null"
-        >
-          All
-        </button>
-        <button
-          *ngFor="let hobby of hobbies"
-          (click)="selectFilter(hobby.id)"
-          [class.bg-gradient-to-r]="selectedFilter === hobby.id"
-          [class.from-[#70AEB9]]="selectedFilter === hobby.id"
-          [class.to-[#4ECDC4]]="selectedFilter === hobby.id"
-          [class.text-white]="selectedFilter === hobby.id"
-          [class.bg-gray-100]="selectedFilter !== hobby.id"
-          [class.text-gray-700]="selectedFilter !== hobby.id"
-          [class.hover:bg-gray-200]="selectedFilter !== hobby.id"
-          class="flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
-          role="tab"
-          [attr.aria-selected]="selectedFilter === hobby.id"
-        >
-          <span *ngIf="hobby.icon">{{ hobby.icon }}</span>
-          {{ hobby.name }}
-        </button>
-      </div>
 
       <!-- Empty State: No Hobbies -->
       <div
@@ -106,8 +121,8 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
           <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#70AEB9]/20 to-[#4ECDC4]/20 flex items-center justify-center">
             <svg class="w-10 h-10 text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </div>
+                    </svg>
+                  </div>
           <h2 class="text-2xl font-bold text-gray-900 mb-3">Choose Your Hobbies</h2>
           <p class="text-gray-600 mb-6">
             Select hobbies you're interested in to see posts from people who share your passions!
@@ -118,8 +133,8 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
           >
             Select Hobbies
           </button>
-        </div>
-      </div>
+                </div>
+              </div>
 
       <!-- Empty State: No Posts -->
       <div
@@ -137,12 +152,12 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
             No posts yet. Share something awesome and start the conversation! 🌟
           </p>
         </div>
-      </div>
+              </div>
 
       <!-- Feed Posts -->
       <div
         *ngIf="!noHobbiesSelected && posts.length > 0"
-        class="space-y-4"
+        class="space-y-6"
         role="feed"
         aria-busy="loading"
       >
@@ -154,7 +169,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
           (comment)="onComment($event)"
           (delete)="onDelete($event)"
         ></app-feed-card>
-      </div>
+              </div>
 
       <!-- Loading Spinner -->
       <div
@@ -169,8 +184,8 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
           <span class="text-gray-600 text-sm">Loading feed...</span>
-        </div>
-      </div>
+            </div>
+          </div>
 
       <!-- End of Feed Message -->
       <div
@@ -208,12 +223,19 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
     .scrollbar-hide::-webkit-scrollbar {
       display: none;
     }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
   `]
 })
 export class ActivitiesComponent implements OnInit, OnDestroy {
   private readonly feedService = inject(FeedService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthenticationService);
 
   posts: FeedPost[] = [];
   hobbies: Array<{ id: number; name: string; icon?: string }> = [];
@@ -225,10 +247,16 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   hasNewPosts = false;
   noHobbiesSelected = false;
 
+  // User info for header
+  currentUserId: number = 0;
+  currentUserAvatar: string = '';
+
+
   private subscriptions: Subscription[] = [];
   private isLoadingMore = false;
 
   ngOnInit(): void {
+    this.loadUserInfo();
     this.checkOnlineStatus();
     this.loadHobbies();
     this.loadFeed();
@@ -239,13 +267,21 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     window.addEventListener('offline', () => this.handleOffline());
   }
 
+  loadUserInfo(): void {
+    const user = this.authService.currentUserValue;
+    if (user) {
+      this.currentUserId = user.id;
+      this.currentUserAvatar = user.profile_image;
+    }
+  }
+
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     window.removeEventListener('online', () => this.handleOnline());
     window.removeEventListener('offline', () => this.handleOffline());
   }
 
-  @HostListener('window:scroll', ['$event'])
+  @HostListener('window:scroll')
   onScroll(): void {
     if (this.isNearBottom() && !this.loading && this.hasMorePosts && !this.isLoadingMore) {
       this.loadMorePosts();
@@ -267,7 +303,12 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   loadFeed(page: number = 1): void {
     this.loading = true;
     
-    this.feedService.getUnifiedFeed(page, 20, this.selectedFilter || undefined).subscribe({
+    // Convert null to undefined for the API call
+    const hobbyFilter = this.selectedFilter !== null ? this.selectedFilter : undefined;
+    
+    console.log('Loading feed with filter:', hobbyFilter); // Debug log
+    
+    this.feedService.getUnifiedFeed(page, 20, hobbyFilter).subscribe({
       next: (response: UnifiedFeedResponse) => {
         if (page === 1) {
           this.posts = response.results;
@@ -292,11 +333,13 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
         } else if (!navigator.onLine) {
           this.loadCachedPosts();
         } else {
-          this.snackBar.open('Failed to load feed', 'Retry', {
+          this.snackBar.open('Failed to load feed. Please try again.', 'Retry', {
             duration: 5000,
             horizontalPosition: 'center',
             verticalPosition: 'top'
-          }).onAction().subscribe(() => this.loadFeed(page));
+          }).onAction().subscribe(() => {
+            this.loadFeed(page);
+          });
         }
       }
     });
@@ -315,11 +358,42 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   }
 
   selectFilter(hobbyId: number | null): void {
+    if (this.selectedFilter === hobbyId) {
+      // Already selected, do nothing
+      return;
+    }
+
+    console.log('Filter changed to:', hobbyId); // Debug log
+
     this.selectedFilter = hobbyId;
     this.currentPage = 1;
     this.hasMorePosts = true;
     this.posts = [];
+    this.loading = true;
+    
+    // Scroll to top of feed smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Show feedback
+    const hobbyName = hobbyId !== null
+      ? this.hobbies.find(h => h.id === hobbyId)?.name || 'hobby'
+      : 'all hobbies';
+    
+    this.snackBar.open(
+      `Filtering by ${hobbyName}`, 
+      '', 
+      { 
+        duration: 1500, 
+        horizontalPosition: 'center', 
+        verticalPosition: 'bottom' 
+      }
+    );
+    
     this.loadFeed(1);
+  }
+
+  getFilteredPostsCount(): number {
+    return this.posts.length;
   }
 
   onPostCreated(): void {
@@ -458,6 +532,7 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
       console.error('Failed to load cached posts:', e);
     }
   }
+
 
   isNearBottom(): boolean {
     const threshold = 300;
