@@ -84,11 +84,46 @@ export class DailyDareService {
     });
   }
 
+  fetchQuizResults(dareId: number): Observable<QuizSubmissionResponse> {
+    return this.http.get<QuizSubmissionResponse>(`${environment.apiUrl}api/v1/game/daily-dare/${dareId}/results/`, {
+      headers: this.headers,
+    });
+  }
+
   fetchHistory(): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiUrl}api/v1/game/daily-dare/history/`, {
       headers: this.headers,
     });
   }
+}
+
+export interface QuizSubmissionResponse {
+  status: string;
+  score: number;
+  total_possible: number;
+  responses: Array<{
+    question_id: number;
+    is_correct: boolean;
+    points_earned: number;
+    selected_option_id: number | null;
+  }>;
+  questions?: QuizDareQuestion[];
+  completed_at?: string;
+}
+
+export interface QuizDareQuestion {
+  id: number;
+  question_text: string;
+  question_type: string;
+  points: number;
+  options: QuizDareOption[];
+  order?: number;
+}
+
+export interface QuizDareOption {
+  id: number;
+  option_text: string;
+  is_correct: boolean;
 }
 
 

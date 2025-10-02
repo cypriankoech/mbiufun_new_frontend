@@ -102,6 +102,16 @@ import { QuizResultsDialogComponent } from '@app/components/quiz-results-dialog.
                 <p class="text-gray-600 mb-4">You earned {{ userScore }} points for this challenge.</p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
+                    *ngIf="isQuiz"
+                    (click)="viewCompletedResults()"
+                    class="px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    View Results
+                  </button>
+                  <button
                     (click)="viewHistory()"
                     class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors duration-200"
                   >
@@ -109,7 +119,7 @@ import { QuizResultsDialogComponent } from '@app/components/quiz-results-dialog.
                   </button>
                   <button
                     (click)="viewLeaderboard()"
-                    class="px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200"
+                    class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors duration-200"
                   >
                     View Leaderboard
                   </button>
@@ -561,6 +571,54 @@ export class DailyDareDetailComponent implements OnInit {
             this.submit();
           });
         }
+      }
+    });
+  }
+
+  viewCompletedResults() {
+    if (!this.dare || !this.dare.id) {
+      this.snackBar.open('Unable to load results', 'OK', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    console.log('Fetching results for dare ID:', this.dare.id);
+
+    this.dareService.fetchQuizResults(this.dare.id).subscribe({
+      next: (response) => {
+        console.log('Quiz results loaded:', response);
+
+        // Build selected answers map for the dialog
+        const selectedAnswersMap: { [questionId: number]: number } = {};
+        response.responses.forEach((resp) => {
+          if (resp.selected_option_id) {
+            selectedAnswersMap[resp.question_id] = resp.selected_option_id;
+          }
+        });
+
+        // Open results dialog with detailed feedback
+        this.dialog.open(QuizResultsDialogComponent, {
+          data: {
+            status: response.status || 'completed',
+            score: response.score || 0,
+            total_possible: response.total_possible || 0,
+            responses: response.responses || [],
+            questions: response.questions || [],
+            selectedAnswers: selectedAnswersMap
+          },
+          width: '90vw',
+          maxWidth: '600px',
+          disableClose: false
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load quiz results:', err);
+        this.snackBar.open('Failed to load results. Please try again.', 'OK', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
