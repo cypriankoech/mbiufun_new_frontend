@@ -65,12 +65,12 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
             [class.scale-105]="selectedFilter === hobby.id"
             [class.bg-white]="selectedFilter !== hobby.id"
             [class.text-gray-700]="selectedFilter !== hobby.id"
-            class="flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm border border-gray-200 transition-all duration-200 hover:border-[#70AEB9] hover:scale-105 active:scale-95 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 max-w-[180px]"
+            class="flex-shrink-0 px-4 py-2.5 rounded-full font-medium text-sm border border-gray-200 transition-all duration-200 hover:border-[#70AEB9] hover:scale-105 active:scale-95 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 max-w-[180px]"
             role="tab"
             [attr.aria-selected]="selectedFilter === hobby.id"
           >
-            <span *ngIf="hobby.icon" class="text-base flex-shrink-0">{{ hobby.icon }}</span>
-            <span class="truncate">{{ hobby.name }}</span>
+            <span *ngIf="hobby.icon" class="text-base flex-shrink-0 leading-none">{{ hobby.icon }}</span>
+            <span class="truncate leading-none">{{ hobby.name }}</span>
           </button>
         </div>
       </div>
