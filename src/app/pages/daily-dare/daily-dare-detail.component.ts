@@ -146,7 +146,7 @@ import { QuizResultsDialogComponent } from '@app/components/quiz-results-dialog.
         </div>
 
         <!-- Quiz Section -->
-        <div *ngIf="isQuiz && quiz && !loadingQuiz" class="space-y-6 quiz-section">
+        <div *ngIf="isQuiz && quiz && !loadingQuiz && !isCompleted" class="space-y-6 quiz-section">
           <!-- Progress bar -->
           <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
             <div class="flex items-center justify-between mb-3">
@@ -432,15 +432,9 @@ export class DailyDareDetailComponent implements OnInit {
       this.isProof = this.isProofType(this.dare.challenge_type);
       this.isQuiz = this.isQuizType(this.dare.challenge_type) || this.hasQuizData(this.dare);
 
-      console.log('Initial dare state from navigation:', {
-        isCompleted: this.isCompleted,
-        userScore: this.userScore,
-        isQuiz: this.isQuiz,
-        challengeType: this.dare.challenge_type
-      });
 
-      // Load quiz data immediately if we have dare data and it's a quiz AND not completed
-      if (this.isQuiz && !this.isCompleted) {
+      // Load quiz data immediately if we have dare data and it's a quiz
+      if (this.isQuiz) {
         this.loadQuizData(id);
       } else {
         this.loadingQuiz = false;
@@ -460,19 +454,9 @@ export class DailyDareDetailComponent implements OnInit {
         this.isProof = this.isProofType(d.challenge_type);
         this.isQuiz = this.isQuizType(d.challenge_type) || this.hasQuizData(d);
 
-        console.log('Dare loaded from API:', {
-          id: d.id,
-          title: d.title,
-          isCompleted: this.isCompleted,
-          userScore: this.userScore,
-          isQuiz: this.isQuiz,
-          isProof: this.isProof,
-          challengeType: d.challenge_type
-        });
 
-        // If it's a quiz type and not completed, load quiz data for answering
-        // If completed, we don't need to load quiz questions (we'll fetch results via API)
-        if (this.isQuiz && !this.isCompleted) {
+        // If it's a quiz type, load quiz data (for answering or for results context)
+        if (this.isQuiz) {
           this.loadQuizData(id);
         } else {
           this.loadingQuiz = false;
@@ -663,7 +647,7 @@ export class DailyDareDetailComponent implements OnInit {
 
   isQuizType(type?: string): boolean {
     const t = (type || '').toLowerCase();
-    return t.includes('quiz') || t.includes('question') || t.includes('test');
+    return t.includes('quiz') || t.includes('question') || t.includes('test') || t === 'challenge';
   }
 
   hasQuizData(dare: DailyDare): boolean {
@@ -676,7 +660,7 @@ export class DailyDareDetailComponent implements OnInit {
       const dareWithQuestions = this.dare as any;
       console.log('Quiz data found in dare object:', dareWithQuestions);
       console.log('Questions array:', dareWithQuestions.questions);
-      
+
       // Validate and process the quiz data
       if (this.isValidQuizStructure(dareWithQuestions.questions)) {
         this.quiz = this.dare as QuizDare;
@@ -739,19 +723,40 @@ export class DailyDareDetailComponent implements OnInit {
     // Create mock quiz data so users can see the interface
     const mockQuestions = [
       {
-        question: "What's the capital of France?",
-        options: ["London", "Berlin", "Paris", "Madrid"],
-        correct_answer: "Paris"
+        id: 1,
+        question_text: "What's the capital of France?",
+        question_type: "multiple_choice",
+        points: 10,
+        options: [
+          { id: 1, option_text: "London", is_correct: false },
+          { id: 2, option_text: "Berlin", is_correct: false },
+          { id: 3, option_text: "Paris", is_correct: true },
+          { id: 4, option_text: "Madrid", is_correct: false }
+        ]
       },
       {
-        question: "Which planet is known as the Red Planet?",
-        options: ["Venus", "Mars", "Jupiter", "Saturn"],
-        correct_answer: "Mars"
+        id: 2,
+        question_text: "Which planet is known as the Red Planet?",
+        question_type: "multiple_choice",
+        points: 10,
+        options: [
+          { id: 5, option_text: "Venus", is_correct: false },
+          { id: 6, option_text: "Mars", is_correct: true },
+          { id: 7, option_text: "Jupiter", is_correct: false },
+          { id: 8, option_text: "Saturn", is_correct: false }
+        ]
       },
       {
-        question: "What is 2 + 2?",
-        options: ["3", "4", "5", "6"],
-        correct_answer: "4"
+        id: 3,
+        question_text: "What is 2 + 2?",
+        question_type: "multiple_choice",
+        points: 10,
+        options: [
+          { id: 9, option_text: "3", is_correct: false },
+          { id: 10, option_text: "4", is_correct: true },
+          { id: 11, option_text: "5", is_correct: false },
+          { id: 12, option_text: "6", is_correct: false }
+        ]
       }
     ];
 
@@ -766,12 +771,6 @@ export class DailyDareDetailComponent implements OnInit {
     };
 
     this.loadingQuiz = false;
-    console.log('Created mock quiz data:', JSON.stringify(this.quiz, null, 2));
-    if (this.quiz.questions && this.quiz.questions.length > 0) {
-      console.log('First question:', this.quiz.questions[0]);
-      console.log('First question text:', this.quiz.questions[0].question);
-      console.log('First question options:', this.quiz.questions[0].options);
-    }
   }
 
   onFileSelected(event: any): void {
@@ -873,10 +872,11 @@ export class DailyDareDetailComponent implements OnInit {
       return '';
     }
     if (typeof q === 'string') return q;
+    if (q.question_text) {
+      return String(q.question_text);
+    }
     if (q.question) {
-      const questionText = String(q.question);
-      console.log('getQuestionText returning:', questionText);
-      return questionText;
+      return String(q.question);
     }
     console.warn('getQuestionText: no valid question property found in', q);
     return '';
@@ -888,24 +888,23 @@ export class DailyDareDetailComponent implements OnInit {
       return '';
     }
     if (typeof opt === 'string') {
-      console.log('getOptionLabel (string):', opt);
       return opt;
     }
     if (typeof opt === 'number') {
-      console.log('getOptionLabel (number):', opt);
       return String(opt);
     }
-    // common shapes: { label, text, value }
+    // common shapes: { option_text, label, text, value }
+    if (opt.option_text != null) return String(opt.option_text);
     if (opt.label != null) return String(opt.label);
     if (opt.text != null) return String(opt.text);
     if (opt.value != null) return String(opt.value);
     // last resort
     console.warn('getOptionLabel: opt is an object with no recognizable label/text/value property:', opt);
-    try { 
+    try {
       const str = JSON.stringify(opt);
       return str.length > 50 ? str.substring(0, 47) + '...' : str;
-    } catch { 
-      return '[Invalid Option]'; 
+    } catch {
+      return '[Invalid Option]';
     }
   }
 
