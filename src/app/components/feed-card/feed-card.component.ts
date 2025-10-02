@@ -10,7 +10,7 @@ import { FeedPost } from '@app/services/feed.service';
   imports: [CommonModule],
   template: `
     <article
-      class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300"
+      class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300"
       [attr.aria-label]="'Post by ' + post.author.first_name + ' ' + post.author.last_name"
     >
       <!-- Card Header -->
@@ -38,11 +38,11 @@ import { FeedPost } from '@app/services/feed.service';
             <div class="flex-1 min-w-0">
               <button
                 (click)="viewProfile()"
-                class="font-semibold text-gray-900 hover:text-[#70AEB9] transition-colors duration-200 text-left focus:outline-none focus:underline"
+                class="font-semibold text-sm sm:text-base text-gray-900 hover:text-[#70AEB9] transition-colors duration-200 text-left focus:outline-none focus:underline"
               >
                 {{ post.author.first_name }} {{ post.author.last_name }}
               </button>
-              <div class="flex items-center gap-2 flex-wrap mt-0.5">
+              <div class="flex items-center gap-2 flex-wrap mt-1">
                 <time
                   [dateTime]="post.created_at"
                   class="text-sm text-gray-500"

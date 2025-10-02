@@ -16,25 +16,24 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, PostComposerComponent, FeedCardComponent],
   template: `
-    <div class="min-h-full pb-4 sm:pb-6">
-      <!-- Simple Page Title -->
-      <div class="mb-4 sm:mb-6">
-        <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57]">Vibes & Activities</h1>
-        <p class="text-gray-600 text-sm mt-1">Discover and share activities with your community</p>
+    <div class="min-h-full pb-20 sm:pb-24">
+      <!-- Page Header -->
+      <div class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57] mb-1">Vibes & Activities</h1>
+        <p class="text-gray-600 text-sm sm:text-base">Discover and share activities with your community</p>
       </div>
 
-
-      <!-- Filter Chips for Feed -->
-      <div class="mb-4 sm:mb-6 relative z-10">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Filter by Hobby</h2>
-          <span *ngIf="selectedFilter !== null" class="text-xs text-gray-500">
-            {{ getFilteredPostsCount() }} posts
+      <!-- Filter Section -->
+      <div class="mb-6 sm:mb-8">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 class="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">Filter by Hobby</h2>
+          <span *ngIf="selectedFilter !== null" class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            {{ getFilteredPostsCount() }} {{ getFilteredPostsCount() === 1 ? 'post' : 'posts' }}
           </span>
         </div>
         <div
           *ngIf="hobbies.length > 0 && !noHobbiesSelected"
-          class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          class="flex gap-2 sm:gap-3 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1"
           role="tablist"
           aria-label="Feed filters"
         >
@@ -73,7 +72,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
             <span class="truncate leading-none">{{ hobby.name }}</span>
           </button>
         </div>
-      </div>
+        </div>
 
       <!-- New Posts Notification -->
       <div
@@ -106,10 +105,12 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
               </div>
 
       <!-- Post Composer -->
+      <div class="mb-6 sm:mb-8">
       <app-post-composer
         *ngIf="!noHobbiesSelected"
         (postCreated)="onPostCreated()"
       ></app-post-composer>
+                  </div>
 
 
       <!-- Empty State: No Hobbies -->
@@ -139,7 +140,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
       <!-- Empty State: No Posts -->
       <div
         *ngIf="!noHobbiesSelected && !loading && posts.length === 0"
-        class="py-12 sm:py-16 text-center animate-fadeIn"
+        class="py-16 sm:py-20 text-center animate-fadeIn"
       >
         <div class="max-w-md mx-auto px-4">
           <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#70AEB9]/20 to-[#4ECDC4]/20 flex items-center justify-center">
@@ -157,7 +158,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
       <!-- Feed Posts -->
       <div
         *ngIf="!noHobbiesSelected && posts.length > 0"
-        class="space-y-3 sm:space-y-4"
+        class="space-y-4 sm:space-y-6"
         role="feed"
         aria-busy="loading"
       >
@@ -174,7 +175,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
       <!-- Loading Spinner -->
       <div
         *ngIf="loading"
-        class="py-8 flex justify-center"
+        class="py-12 sm:py-16 flex justify-center"
         role="status"
         aria-live="polite"
       >
@@ -190,7 +191,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
       <!-- End of Feed Message -->
       <div
         *ngIf="!loading && posts.length > 0 && !hasMorePosts"
-        class="py-8 text-center animate-fadeIn"
+        class="py-10 sm:py-12 text-center animate-fadeIn"
       >
         <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-50 text-gray-600">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
