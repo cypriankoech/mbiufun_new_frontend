@@ -430,10 +430,17 @@ export class DailyDareDetailComponent implements OnInit {
       this.userScore = this.dare.user_score ?? undefined;
       this.totalPossible = this.dare.points || 10;
       this.isProof = this.isProofType(this.dare.challenge_type);
-      this.isQuiz = this.isQuizType(this.dare.challenge_type) || this.hasQuizData(this.dare) || true;
+      this.isQuiz = this.isQuizType(this.dare.challenge_type) || this.hasQuizData(this.dare);
 
-      // Load quiz data immediately if we have dare data
-      if (this.isQuiz) {
+      console.log('Initial dare state from navigation:', {
+        isCompleted: this.isCompleted,
+        userScore: this.userScore,
+        isQuiz: this.isQuiz,
+        challengeType: this.dare.challenge_type
+      });
+
+      // Load quiz data immediately if we have dare data and it's a quiz AND not completed
+      if (this.isQuiz && !this.isCompleted) {
         this.loadQuizData(id);
       } else {
         this.loadingQuiz = false;
@@ -451,13 +458,21 @@ export class DailyDareDetailComponent implements OnInit {
 
         // Check dare types
         this.isProof = this.isProofType(d.challenge_type);
-        this.isQuiz = this.isQuizType(d.challenge_type) || this.hasQuizData(d) || true; // Force quiz for demo
+        this.isQuiz = this.isQuizType(d.challenge_type) || this.hasQuizData(d);
 
-        console.log('Dare loaded:', d);
-        console.log('Is Quiz:', this.isQuiz, 'Is Proof:', this.isProof);
+        console.log('Dare loaded from API:', {
+          id: d.id,
+          title: d.title,
+          isCompleted: this.isCompleted,
+          userScore: this.userScore,
+          isQuiz: this.isQuiz,
+          isProof: this.isProof,
+          challengeType: d.challenge_type
+        });
 
-        // If it's a quiz type, try to load quiz data
-        if (this.isQuiz) {
+        // If it's a quiz type and not completed, load quiz data for answering
+        // If completed, we don't need to load quiz questions (we'll fetch results via API)
+        if (this.isQuiz && !this.isCompleted) {
           this.loadQuizData(id);
         } else {
           this.loadingQuiz = false;
