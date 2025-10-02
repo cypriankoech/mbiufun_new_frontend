@@ -10,17 +10,17 @@ import { FeedPost } from '@app/services/feed.service';
   imports: [CommonModule],
   template: `
     <article
-      class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300"
+      class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300"
       [attr.aria-label]="'Post by ' + post.author.first_name + ' ' + post.author.last_name"
     >
       <!-- Card Header -->
-      <div class="p-4 sm:p-5">
+      <div class="p-3 sm:p-4">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-3 flex-1">
             <!-- Avatar -->
             <button
               (click)="viewProfile()"
-              class="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center text-white font-semibold text-lg hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+              class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center text-white font-semibold text-base sm:text-lg hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
               [attr.aria-label]="'View ' + post.author.first_name + ' profile'"
             >
               <img
@@ -104,18 +104,19 @@ import { FeedPost } from '@app/services/feed.service';
         </div>
 
         <!-- Caption -->
-        <div class="mt-3">
-          <p class="text-gray-800 whitespace-pre-wrap break-words">{{ post.caption }}</p>
+        <div class="mt-2 sm:mt-3">
+          <p class="text-sm sm:text-base text-gray-800 whitespace-pre-wrap break-words leading-relaxed">{{ post.caption }}</p>
         </div>
       </div>
 
       <!-- Post Image -->
-      <div *ngIf="post.image_url" class="w-full">
+      <div *ngIf="post.image_url" class="w-full bg-gray-100">
         <img
           [src]="post.image_url"
           [alt]="'Image from post by ' + post.author.first_name"
-          class="w-full h-auto max-h-[500px] object-cover"
+          class="w-full h-auto max-h-96 sm:max-h-[32rem] object-contain bg-gray-50"
           loading="lazy"
+          (error)="onImageError($event)"
         />
       </div>
 
@@ -148,7 +149,7 @@ import { FeedPost } from '@app/services/feed.service';
       </div>
 
       <!-- Action Bar -->
-      <div class="px-4 sm:px-5 py-3 border-t border-gray-100">
+      <div class="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-100">
         <div class="flex items-center justify-between">
           <!-- Like Button -->
           <button
@@ -276,6 +277,12 @@ export class FeedCardComponent {
     if (diffDays < 7) return `${diffDays}d ago`;
     
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    console.warn('Failed to load image:', this.post.image_url);
   }
 }
 

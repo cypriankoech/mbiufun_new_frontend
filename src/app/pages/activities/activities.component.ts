@@ -16,16 +16,16 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, PostComposerComponent, FeedCardComponent],
   template: `
-    <div class="min-h-full pb-6">
+    <div class="min-h-full pb-4 sm:pb-6">
       <!-- Simple Page Title -->
-      <div class="mb-6">
+      <div class="mb-4 sm:mb-6">
         <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57]">Vibes & Activities</h1>
         <p class="text-gray-600 text-sm mt-1">Discover and share activities with your community</p>
       </div>
 
 
       <!-- Filter Chips for Feed -->
-      <div class="mb-6 relative z-10">
+      <div class="mb-4 sm:mb-6 relative z-10">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Filter by Hobby</h2>
           <span *ngIf="selectedFilter !== null" class="text-xs text-gray-500">
@@ -157,7 +157,7 @@ import { FeedCardComponent } from '@app/components/feed-card/feed-card.component
       <!-- Feed Posts -->
       <div
         *ngIf="!noHobbiesSelected && posts.length > 0"
-        class="space-y-6"
+        class="space-y-3 sm:space-y-4"
         role="feed"
         aria-busy="loading"
       >
