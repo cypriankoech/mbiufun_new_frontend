@@ -20,7 +20,7 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
           class="flex-1 text-left px-4 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
           aria-label="Write a post"
         >
-          What's on your mind?
+          What are you doing today?
         </button>
       </div>
 
