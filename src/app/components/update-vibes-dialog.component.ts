@@ -109,12 +109,22 @@ export class UpdateVibesDialogComponent implements OnInit {
   }
 
   toggleVibe(vibeId: number): void {
-    const index = this.selectedVibeIds.indexOf(vibeId);
+    // Ensure vibeId is a valid number
+    const id = typeof vibeId === 'string' ? parseInt(vibeId, 10) : vibeId;
+    
+    if (!id || isNaN(id)) {
+      console.error('Invalid vibe ID:', vibeId);
+      return;
+    }
+    
+    const index = this.selectedVibeIds.indexOf(id);
     if (index > -1) {
       this.selectedVibeIds.splice(index, 1);
     } else {
-      this.selectedVibeIds.push(vibeId);
+      this.selectedVibeIds.push(id);
     }
+    
+    console.log('Selected vibe IDs:', this.selectedVibeIds);
   }
 
   onCancel(): void {
@@ -128,6 +138,11 @@ export class UpdateVibesDialogComponent implements OnInit {
       return;
     }
 
+    // Filter out any invalid IDs (null, undefined, NaN)
+    const validVibeIds = this.selectedVibeIds.filter(id => id && !isNaN(id) && id > 0);
+    
+    console.log('Sending vibe IDs to backend:', validVibeIds);
+
     this.isSaving = true;
     const token = this.authService.getToken();
     const headers = new HttpHeaders({
@@ -137,21 +152,30 @@ export class UpdateVibesDialogComponent implements OnInit {
     });
 
     const body = {
-      vibe_ids: this.selectedVibeIds
+      vibe_ids: validVibeIds
     };
+
+    console.log('Request body:', JSON.stringify(body));
 
     this.http.post(`${environment.apiUrl}api/v1/user/vibes/`, body, { headers })
       .subscribe({
         next: (response: any) => {
+          console.log('Backend response:', response);
+          
+          // Get the full game objects for the selected vibes
+          const updatedVibes = this.availableVibes.filter(v => validVibeIds.includes(v.id));
+          
+          console.log('Updated vibes to return:', updatedVibes);
+          
           // Update the user's selected vibes
           const currentUser = this.authService.currentUserValue;
           if (currentUser) {
-            const updatedVibes = this.availableVibes.filter(v => this.selectedVibeIds.includes(v.id));
             currentUser.selected_vibes = updatedVibes;
             this.authService.setCurrentUser(currentUser);
           }
           
-          this.dialogRef.close(this.selectedVibeIds);
+          // Return the full game objects, not just IDs
+          this.dialogRef.close(updatedVibes);
         },
         error: (err) => {
           console.error('Failed to update vibes:', err);

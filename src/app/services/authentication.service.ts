@@ -56,6 +56,19 @@ export class AuthenticationService {
     );
   }
 
+  getUserProfile(): Observable<any> {
+    const token = this.getUserToken();
+    const headers = new HttpHeaders({
+      'mbiu-token': token,
+      'Authorization': `Bearer ${token}`
+    });
+    
+    return this.http.get<any>(
+      `${environment.apiUrl}api/v1/user/profile/`, 
+      { headers }
+    );
+  }
+
   updateUserProfile(formData: FormData): Observable<any> {
     const token = this.getUserToken();
     const headers = new HttpHeaders({

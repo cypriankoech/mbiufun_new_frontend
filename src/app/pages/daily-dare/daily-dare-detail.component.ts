@@ -151,7 +151,7 @@ import { QuizResultsDialogComponent } from '@app/components/quiz-results-dialog.
           <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-semibold text-gray-700">Your Progress</span>
-              <span class="text-sm font-semibold text-[#70AEB9]">{{ answeredCount }} / {{ quiz?.questions?.length || 0 }}</span>
+              <span class="text-sm font-semibold text-[#70AEB9]">{{ answeredCount }} / {{ quiz.questions?.length || 0 }}</span>
             </div>
             <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
               <div 
@@ -212,11 +212,11 @@ import { QuizResultsDialogComponent } from '@app/components/quiz-results-dialog.
               <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-sm text-gray-600">
                   <span class="font-semibold">{{ answeredCount }}</span> of 
-                  <span class="font-semibold">{{ quiz?.questions?.length || 0 }}</span> questions answered
+                  <span class="font-semibold">{{ quiz.questions?.length || 0 }}</span> questions answered
                 </div>
                 <button 
                   (click)="submit()" 
-                  [disabled]="submitting || answeredCount < (quiz?.questions?.length || 0)"
+                  [disabled]="submitting || answeredCount < (quiz.questions?.length || 0)"
                   class="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                   [class.bg-gradient-to-r]="!submitting"
                   [class.from-[#70AEB9]]="!submitting"
@@ -418,11 +418,15 @@ export class DailyDareDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     const navState: any = window.history.state || {};
-    if (navState && navState.dare) {
-      this.dare = navState.dare as DailyDare;
-    }
+    console.log('DailyDareDetailComponent: Loading dare with ID:', id);
+    console.log('DailyDareDetailComponent: Navigation state:', navState);
 
-    console.log('Loading dare with ID:', id);
+    if (navState && navState.dare) {
+      console.log('DailyDareDetailComponent: Dare found in navigation state:', navState.dare);
+      this.dare = navState.dare as DailyDare;
+    } else {
+      console.log('DailyDareDetailComponent: No dare found in navigation state');
+    }
 
     // If we have dare data from navigation state, use it temporarily
     if (this.dare) {
@@ -442,36 +446,69 @@ export class DailyDareDetailComponent implements OnInit {
     }
 
     // Always re-fetch latest server truth
+    console.log('DailyDareDetailComponent: Fetching dare by ID from API...');
     this.dareService.fetchById(id).subscribe({
       next: (d) => {
-        console.log('Dare API response:', d);
-        this.dare = d as DailyDare;
-        this.isCompleted = d.is_completed || false;
-        this.userScore = d.user_score ?? undefined;
-        this.totalPossible = d.points || 10;
+        console.log('DailyDareDetailComponent: Dare API response:', d);
+        console.log('DailyDareDetailComponent: Response type:', typeof d);
+        console.log('DailyDareDetailComponent: Response keys:', d ? Object.keys(d) : 'null');
+
+        // Handle the case where API returns an array (list endpoint) or single object
+        let dareData: DailyDare;
+        if (Array.isArray(d)) {
+          console.log('DailyDareDetailComponent: API returned array, using first item');
+          dareData = d[0] || this.dare;
+        } else {
+          dareData = d as DailyDare;
+        }
+
+        if (!dareData) {
+          console.error('DailyDareDetailComponent: No dare data received from API');
+          this.snackBar.open('Failed to load dare details', 'Dismiss', { duration: 3000 });
+          this.loadingQuiz = false;
+          return;
+        }
+
+        this.dare = dareData;
+        this.isCompleted = dareData.is_completed || false;
+        this.userScore = dareData.user_score ?? undefined;
+        this.totalPossible = dareData.points || 10;
 
         // Check dare types
-        this.isProof = this.isProofType(d.challenge_type);
-        this.isQuiz = this.isQuizType(d.challenge_type) || this.hasQuizData(d);
+        this.isProof = this.isProofType(dareData.challenge_type);
+        this.isQuiz = this.isQuizType(dareData.challenge_type) || this.hasQuizData(dareData);
 
+        console.log('DailyDareDetailComponent: Dare types - isQuiz:', this.isQuiz, 'isProof:', this.isProof);
 
         // If it's a quiz type, load quiz data (for answering or for results context)
         if (this.isQuiz) {
+          console.log('DailyDareDetailComponent: Loading quiz data for dare ID:', id);
           this.loadQuizData(id);
         } else {
+          console.log('DailyDareDetailComponent: Not a quiz, setting loadingQuiz to false');
           this.loadingQuiz = false;
         }
       },
       error: (err) => {
-        console.error('Failed to load dare details:', err);
-        console.error('Error status:', err.status);
-        console.error('Error message:', err.message);
+        console.error('DailyDareDetailComponent: Failed to load dare details:', err);
+        console.error('DailyDareDetailComponent: Error status:', err.status);
+        console.error('DailyDareDetailComponent: Error message:', err.message);
 
         // If API fails but we have navigation state data, continue with that
         if (this.dare) {
-          console.log('Using navigation state data as fallback');
+          console.log('DailyDareDetailComponent: Using navigation state data as fallback');
           this.snackBar.open('Using cached data - API unavailable', 'Dismiss', { duration: 3000 });
+
+          // Still try to load quiz data if we have fallback dare data
+          this.isProof = this.isProofType(this.dare.challenge_type);
+          this.isQuiz = this.isQuizType(this.dare.challenge_type) || this.hasQuizData(this.dare);
+          if (this.isQuiz) {
+            this.loadQuizData(id);
+          } else {
+            this.loadingQuiz = false;
+          }
         } else {
+          console.log('DailyDareDetailComponent: No fallback data available');
           this.snackBar.open('Failed to load dare details', 'Dismiss', { duration: 3000 });
           this.loadingQuiz = false;
         }
@@ -489,7 +526,7 @@ export class DailyDareDetailComponent implements OnInit {
 
   submit() {
     if (!this.isQuiz || !this.quiz) return;
-    
+
     const totalQuestions = this.quiz.questions?.length || 0;
     if (this.answeredCount < totalQuestions) {
       this.snackBar.open('Please answer all questions before submitting', 'OK', {
@@ -499,20 +536,56 @@ export class DailyDareDetailComponent implements OnInit {
       return;
     }
 
-    // Convert answers object to the format expected by backend
-    // answers is Record<number, string> where key is question index, value is option_id
-    const responses = Object.entries(this.answers).map(([questionIndex, optionId]) => {
+    // Validate all questions and options have valid IDs before submitting
+    for (const [questionIndex, optionIndex] of Object.entries(this.answers)) {
       const question = this.quiz?.questions?.[Number(questionIndex)];
+      console.log('Submit: Validating question at index', questionIndex, 'with question:', question);
+
+      const questionId = question?.id;
+      if (!questionId || questionId === 0) {
+        console.error('Submit: Invalid question ID for question at index', questionIndex, ':', questionId);
+        this.snackBar.open('❌ Invalid quiz data. Please refresh and try again.', 'OK', {
+          duration: 4000,
+          panelClass: ['error-snackbar']
+        });
+        return; // Exit early if any question has invalid ID
+      }
+
+      const selectedOption = question?.options?.[Number(optionIndex)];
+      const optionId = selectedOption?.id;
+      if (!optionId || optionId === 0) {
+        console.error('Submit: Invalid option ID for question', questionIndex, 'option index', optionIndex, ':', optionId);
+        this.snackBar.open('❌ Invalid quiz data. Please refresh and try again.', 'OK', {
+          duration: 4000,
+          panelClass: ['error-snackbar']
+        });
+        return; // Exit early if any option has invalid ID
+      }
+    }
+
+    // Convert answers object to the format expected by backend
+    // answers is Record<number, string> where key is question index, value is option index
+    const responses = Object.entries(this.answers).map(([questionIndex, optionIndex]) => {
+      const question = this.quiz?.questions?.[Number(questionIndex)];
+      const selectedOption = question?.options?.[Number(optionIndex)];
+
+      console.log('Submit: Question', questionIndex, 'selected option index', optionIndex, 'option data:', selectedOption);
+
       return {
         question_id: question?.id || 0,
-        option_id: Number(optionId)
+        option_id: selectedOption?.id || Number(optionIndex)
       };
     });
 
-    const payload = { responses };
+    const payload = {
+      dare_id: this.dare?.id,
+      responses
+    };
     this.submitting = true;
 
     console.log('Submitting quiz answers:', payload);
+    console.log('Quiz data:', this.quiz);
+    console.log('Dare ID being submitted:', this.dare?.id);
 
     this.dareService.submitQuizAnswers(payload).subscribe({
       next: (response: any) => {
@@ -655,37 +728,68 @@ export class DailyDareDetailComponent implements OnInit {
   }
 
   loadQuizData(id: number): void {
+    console.log('loadQuizData: Starting to load quiz data for dare ID:', id);
+    console.log('loadQuizData: Current dare object:', this.dare);
+
     // First try to get quiz data from the dare itself
     if (this.hasQuizData(this.dare!)) {
       const dareWithQuestions = this.dare as any;
-      console.log('Quiz data found in dare object:', dareWithQuestions);
-      console.log('Questions array:', dareWithQuestions.questions);
+      console.log('loadQuizData: Quiz data found in dare object:', dareWithQuestions);
+      console.log('loadQuizData: Questions array:', dareWithQuestions.questions);
+      console.log('loadQuizData: Questions length:', dareWithQuestions.questions?.length);
+
+      // Log each question's structure
+      dareWithQuestions.questions?.forEach((q: any, index: number) => {
+        console.log(`loadQuizData: Question ${index}:`, {
+          id: q.id,
+          question_text: q.question_text,
+          question: q.question,
+          options: q.options?.length,
+          optionsData: q.options
+        });
+      });
 
       // Validate and process the quiz data
       if (this.isValidQuizStructure(dareWithQuestions.questions)) {
         this.quiz = this.dare as QuizDare;
         this.loadingQuiz = false;
-        console.log('Using validated quiz data from dare object');
+        console.log('loadQuizData: Using validated quiz data from dare object');
         return;
       } else {
-        console.warn('Quiz data in dare object has invalid structure, will try API or create mock');
+        console.warn('loadQuizData: Quiz data in dare object has invalid structure, will try API or create mock');
       }
     }
 
     // Otherwise, try the separate quiz endpoint
+    console.log('loadQuizData: Trying to fetch quiz data from API endpoint');
     this.dareService.fetchQuizById(id).subscribe({
       next: (q) => {
-        console.log('Quiz data loaded from API:', q);
+        console.log('loadQuizData: Quiz data loaded from API:', q);
+        console.log('loadQuizData: API response type:', typeof q);
+        console.log('loadQuizData: API response questions:', (q as any)?.questions);
+
+        // Log each question's structure from API
+        (q as any)?.questions?.forEach((question: any, index: number) => {
+          console.log(`loadQuizData: API Question ${index}:`, {
+            id: question.id,
+            question_text: question.question_text,
+            question: question.question,
+            options: question.options?.length,
+            optionsData: question.options
+          });
+        });
+
         if (q && this.isValidQuizStructure((q as any).questions)) {
           this.quiz = q;
           this.loadingQuiz = false;
+          console.log('loadQuizData: Using validated quiz data from API');
         } else {
-          console.warn('API quiz data has invalid structure, creating mock');
+          console.warn('loadQuizData: API quiz data has invalid structure, creating mock');
           this.createMockQuiz();
         }
       },
       error: (err) => {
-        console.error('Failed to load quiz data:', err);
+        console.error('loadQuizData: Failed to load quiz data from API:', err);
         // Create mock quiz data for demonstration
         this.createMockQuiz();
       }

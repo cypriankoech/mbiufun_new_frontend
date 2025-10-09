@@ -72,30 +72,6 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
           </div>
         </div>
 
-        <!-- Hobby Selection -->
-        <div>
-          <label for="hobby" class="block text-sm font-medium text-gray-700 mb-2">
-            Choose a hobby (optional)
-            <span *ngIf="hobbies.length === 0" class="text-xs text-gray-500 font-normal ml-2">
-              (No hobbies available - add vibes in your profile)
-            </span>
-          </label>
-          <select
-            id="hobby"
-            [(ngModel)]="selectedHobbyId"
-            [disabled]="hobbies.length === 0"
-            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#70AEB9] focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/20 transition-colors duration-200 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option [value]="null">{{ hobbies.length === 0 ? 'No hobbies selected yet' : 'No hobby' }}</option>
-            <option *ngFor="let hobby of hobbies" [value]="hobby.id">
-              {{ hobby.icon }} {{ hobby.name }}
-            </option>
-          </select>
-          <p *ngIf="hobbies.length === 0" class="mt-1 text-xs text-gray-500">
-            💡 Tip: Select your hobbies/vibes in your profile to tag posts
-          </p>
-        </div>
-
         <!-- Image Upload -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Add an image (optional)</label>
@@ -186,19 +162,16 @@ export class PostComposerComponent implements OnInit {
 
   isExpanded = false;
   caption = '';
-  selectedHobbyId: number | null = null;
   selectedImage: File | null = null;
   imagePreview: string | null = null;
   isSubmitting = false;
   showAISuggestions = false;
   aiSuggestions: AICaptionSuggestion[] = [];
-  hobbies: Array<{ id: number; name: string; icon?: string }> = [];
   userInitial = 'U';
   activePostCount = 0;
   postLimit = 5;
 
   ngOnInit(): void {
-    this.loadHobbies();
     this.checkActivePostCount();
     this.loadAISuggestions();
     
@@ -222,18 +195,6 @@ export class PostComposerComponent implements OnInit {
 
   onCaptionInput(): void {
     // Could trigger real-time AI suggestions based on context
-  }
-
-  loadHobbies(): void {
-    this.feedService.getUserHobbies().subscribe({
-      next: (hobbies) => {
-        this.hobbies = hobbies;
-      },
-      error: (error) => {
-        console.error('Failed to load hobbies:', error);
-        this.hobbies = [];
-      }
-    });
   }
 
   loadAISuggestions(): void {
@@ -312,7 +273,6 @@ export class PostComposerComponent implements OnInit {
 
     this.feedService.createPost({
       caption: this.caption,
-      hobby_id: this.selectedHobbyId || undefined,
       image: this.selectedImage || undefined
     }).subscribe({
       next: () => {
@@ -374,7 +334,6 @@ export class PostComposerComponent implements OnInit {
   resetComposer(): void {
     this.isExpanded = false;
     this.caption = '';
-    this.selectedHobbyId = null;
     this.selectedImage = null;
     this.imagePreview = null;
     this.isSubmitting = false;

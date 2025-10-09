@@ -232,13 +232,42 @@ export class DailyDareComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     // TODO: Add analytics logging
     // await this.analytics.logEvent('page_view', {"component": "DailyDareComponent"});
-    
-    this.dareService.fetchTodayQuiz().subscribe({
+
+    console.log('DailyDareComponent: Starting to fetch daily dares...');
+    this.dareService.fetchAll().subscribe({
       next: (d) => {
-        this.dailyDares = (d || []).map(x => this.prepareDare(x));
+        console.log('DailyDareComponent: API response received:', d);
+        console.log('DailyDareComponent: Response type:', typeof d);
+        console.log('DailyDareComponent: Response is array?', Array.isArray(d));
+
+        // Ensure we have an array to work with
+        let daresArray: any[] = [];
+        if (Array.isArray(d)) {
+          daresArray = d;
+        } else if (d && typeof d === 'object') {
+          // If it's a single object, wrap it in an array
+          daresArray = [d];
+        }
+
+        console.log('DailyDareComponent: Processing', daresArray.length, 'dares');
+
+        this.dailyDares = daresArray.map(x => {
+          console.log('DailyDareComponent: Processing dare:', x);
+          return this.prepareDare(x);
+        });
+
+        console.log('DailyDareComponent: Final dailyDares array:', this.dailyDares);
+        console.log('DailyDareComponent: filteredDares computed:', this.filteredDares);
+
         this.isLoading = false;
       },
-      error: () => { this.dailyDares = []; this.isLoading = false; }
+      error: (err) => {
+        console.error('DailyDareComponent: API error:', err);
+        console.error('DailyDareComponent: Error status:', err.status);
+        console.error('DailyDareComponent: Error message:', err.message);
+        this.dailyDares = [];
+        this.isLoading = false;
+      }
     });
   }
 
@@ -257,6 +286,11 @@ export class DailyDareComponent implements OnInit, OnDestroy {
   }
 
   goToDare(dare: DailyDare): void {
+    console.log('DailyDareComponent: Navigating to dare detail page');
+    console.log('DailyDareComponent: Dare object:', dare);
+    console.log('DailyDareComponent: Dare ID:', dare.id);
+    console.log('DailyDareComponent: Dare title:', dare.title);
+    console.log('DailyDareComponent: Dare is_completed:', dare.is_completed);
     this.router.navigate(['/app/daily-dare', dare.id], { state: { dare } });
   }
 
