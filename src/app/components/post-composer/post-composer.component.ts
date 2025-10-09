@@ -87,10 +87,10 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
           </button>
         </div>
 
-        <!-- Action Buttons (WhatsApp style - image button and post button on same line) -->
+        <!-- Action Buttons (WhatsApp style - image button longer, send button is icon) -->
         <div class="flex gap-2 sm:gap-3 pt-2">
-          <!-- Image Upload Button -->
-          <div class="relative">
+          <!-- Image Upload Button (longer) -->
+          <div class="relative flex-1">
             <input
               #fileInput
               type="file"
@@ -102,43 +102,38 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
             />
             <button
               (click)="fileInput.click()"
-              class="px-3 sm:px-4 py-3 rounded-xl border-2 border-gray-300 hover:border-[#70AEB9] text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+              class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 hover:border-[#70AEB9] text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
               type="button"
               title="Choose image"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span class="hidden sm:inline">{{ selectedImage ? 'Change' : 'Image' }}</span>
+              <span>{{ selectedImage ? 'Change image' : 'Choose image' }}</span>
             </button>
           </div>
 
-          <!-- Post Button -->
+          <!-- Send/Post Button (icon only, like WhatsApp) -->
           <button
             (click)="submitPost()"
             [disabled]="!canSubmit || isSubmitting"
-            class="flex-1 px-4 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] hover:from-[#5a9aa3] hover:to-[#3db5ac] text-white font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+            class="w-12 h-12 rounded-full bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] hover:from-[#5a9aa3] hover:to-[#3db5ac] text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 flex items-center justify-center"
             [attr.aria-busy]="isSubmitting"
+            [attr.aria-label]="isSubmitting ? 'Posting...' : 'Send post'"
           >
-            <span *ngIf="!isSubmitting" class="flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              Post
-            </span>
-            <span *ngIf="isSubmitting" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Posting...
-            </span>
+            <svg *ngIf="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            <svg *ngIf="isSubmitting" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </button>
 
           <!-- Cancel Button -->
           <button
             (click)="cancelComposer()"
-            class="px-4 sm:px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            class="px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
           >
             Cancel
           </button>
