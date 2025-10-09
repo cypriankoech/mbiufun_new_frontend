@@ -72,9 +72,24 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
           </div>
         </div>
 
-        <!-- Image Upload -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Add an image (optional)</label>
+        <!-- Image Preview (if image selected) -->
+        <div *ngIf="imagePreview" class="relative">
+          <img [src]="imagePreview" alt="Preview" class="w-full h-48 object-cover rounded-xl" />
+          <button
+            (click)="removeImage()"
+            class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+            type="button"
+            aria-label="Remove image"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Action Buttons (WhatsApp style - image button and post button on same line) -->
+        <div class="flex gap-2 sm:gap-3 pt-2">
+          <!-- Image Upload Button -->
           <div class="relative">
             <input
               #fileInput
@@ -87,37 +102,22 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
             />
             <button
               (click)="fileInput.click()"
-              class="w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#70AEB9] text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+              class="px-3 sm:px-4 py-3 rounded-xl border-2 border-gray-300 hover:border-[#70AEB9] text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
               type="button"
+              title="Choose image"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              {{ selectedImage ? 'Change image' : 'Choose image' }}
+              <span class="hidden sm:inline">{{ selectedImage ? 'Change' : 'Image' }}</span>
             </button>
           </div>
-          <!-- Image Preview -->
-          <div *ngIf="imagePreview" class="mt-3 relative">
-            <img [src]="imagePreview" alt="Preview" class="w-full h-48 object-cover rounded-xl" />
-            <button
-              (click)="removeImage()"
-              class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50"
-              type="button"
-              aria-label="Remove image"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex gap-3 pt-2">
+          <!-- Post Button -->
           <button
             (click)="submitPost()"
             [disabled]="!canSubmit || isSubmitting"
-            class="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] hover:from-[#5a9aa3] hover:to-[#3db5ac] text-white font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+            class="flex-1 px-4 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] hover:from-[#5a9aa3] hover:to-[#3db5ac] text-white font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
             [attr.aria-busy]="isSubmitting"
           >
             <span *ngIf="!isSubmitting" class="flex items-center justify-center gap-2">
@@ -134,9 +134,11 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
               Posting...
             </span>
           </button>
+
+          <!-- Cancel Button -->
           <button
             (click)="cancelComposer()"
-            class="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            class="px-4 sm:px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
           >
             Cancel
           </button>

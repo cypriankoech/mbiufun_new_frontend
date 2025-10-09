@@ -7,7 +7,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "dist/mbiufun-new-frontend",
+    "public": "dist/prod",
     "ignore": [
       "firebase.json",
       "**/.*",
