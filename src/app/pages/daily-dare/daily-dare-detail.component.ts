@@ -772,6 +772,21 @@ export class DailyDareDetailComponent implements OnInit {
         console.log('loadQuizData: Quiz data loaded from API:', q);
         console.log('loadQuizData: API response type:', typeof q);
         console.log('loadQuizData: API response questions:', (q as any)?.questions);
+        console.log('loadQuizData: API response is_completed:', (q as any)?.is_completed);
+
+        // Check if this quiz is already completed
+        if ((q as any)?.is_completed && (!(q as any)?.questions || (q as any)?.questions?.length === 0)) {
+          console.log('loadQuizData: Quiz already completed, questions not returned by API');
+          // Mark as completed and show the already completed message
+          this.isCompleted = true;
+          this.userScore = (q as any)?.user_score || 0;
+          this.loadingQuiz = false;
+          this.snackBar.open('✅ You have already completed this quiz!', 'OK', {
+            duration: 4000,
+            panelClass: ['success-snackbar']
+          });
+          return;
+        }
 
         // Log each question's structure from API
         (q as any)?.questions?.forEach((question: any, index: number) => {
