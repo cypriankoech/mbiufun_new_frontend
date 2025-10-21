@@ -13,12 +13,12 @@ export const environment = {
   emailJsPublicKey: 'K-zzTSobzE_ouBiHH',
   firebase: {
     apiKey: 'AIzaSyAALMJYvbHUYUf5BLXs3bsB0lI5yzBk9bo',
-    authDomain: 'mbiufun-18714.firebaseapp.com',
-    projectId: 'mbiufun-18714',
-    storageBucket: 'mbiufun-18714.appspot.com',
-    messagingSenderId: '252074081141',
-    appId: '1:252074081141:web:c0a722397c66c1d331f13c',
-    measurementId: 'G-26NCBWYNF8',
-    databaseURL: 'https://mbiufun-18714-default-rtdb.europe-west1.firebasedatabase.app',
+    authDomain: 'mbiufun-app.firebaseapp.com',
+    projectId: 'mbiufun-app',
+    storageBucket: 'mbiufun-app.appspot.com',
+    messagingSenderId: '828807586987',
+    appId: '1:828807586987:web:1234567890abcdef',
+    measurementId: 'G-XXXXXXXXXX',
+    databaseURL: 'https://mbiufun-app-default-rtdb.europe-west1.firebasedatabase.app',
   }
 };

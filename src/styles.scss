@@ -260,11 +260,55 @@ a.mbiu_like {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* Ensure consistent rendering across browsers */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Force hardware acceleration for smooth animations in Chrome */
+.group,
+.hover\:shadow-2xl,
+.hover\:shadow-xl,
+.hover\:-translate-y-1,
+[class*="transition"],
+[class*="transform"],
+[class*="animate"] {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
 }
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Cross-browser compatibility fixes */
+@layer utilities {
+  /* Ensure backdrop-filter works in all browsers including Chrome */
+  .backdrop-blur-sm,
+  .backdrop-blur,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  }
+  
+  /* Ensure transforms work properly in Chrome */
+  .transform {
+    -webkit-transform: var(--tw-transform);
+  }
+  
+  /* Ensure transitions are smooth in Chrome */
+  .transition-all,
+  .transition {
+    -webkit-transition: all var(--tw-transition-duration, 0.3s) var(--tw-transition-timing-function, ease);
+  }
+}
 
 :root {
   --primary: #70AEB9;
@@ -317,6 +361,7 @@ a.mbiu_like {
 
 .streak-dialog-backdrop.cdk-overlay-backdrop {
   background: rgba(0,0,0,0.5) !important;
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
 

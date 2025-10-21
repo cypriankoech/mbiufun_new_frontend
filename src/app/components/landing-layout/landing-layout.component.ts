@@ -40,7 +40,7 @@ import { CommonModule } from '@angular/common';
             <!-- Brand Name with Gradient -->
             <div class="text-center">
               <h1 class="text-5xl lg:text-6xl font-extrabold tracking-wider mb-2">
-                <span class="text-white drop-shadow-2xl text-stroke">M</span><span class="text-gradient">biu</span>
+                 <span class="text-white drop-shadow-2xl text-stroke">M</span><span class="text-gradient">biu</span>
               </h1>
               <p class="text-white/80 text-lg font-medium tracking-wide animate-pulse-gentle">
                 Connect • Play • Discover
@@ -101,16 +101,26 @@ import { CommonModule } from '@angular/common';
 
     .text-gradient {
       background: linear-gradient(45deg, #FF4757, #FF6B9D, #4ECDC4);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 20px rgba(255, 71, 87, 0.5), 0 0 40px rgba(255, 107, 157, 0.3);
-      filter: brightness(1.1) contrast(1.2);
+      -moz-background-clip: text;
+      -moz-text-fill-color: transparent;
+      color: transparent;
+      /* Add drop-shadow filter instead of text-shadow for Chrome compatibility */
+      filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.5)) drop-shadow(0 0 40px rgba(255, 107, 157, 0.3)) brightness(1.1) contrast(1.2);
+      -webkit-filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.5)) drop-shadow(0 0 40px rgba(255, 107, 157, 0.3)) brightness(1.1) contrast(1.2);
     }
 
     .text-stroke {
       -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
       text-stroke: 1px rgba(0, 0, 0, 0.3);
+      /* Fallback for Firefox */
+      text-shadow: 
+        -1px -1px 0 rgba(0, 0, 0, 0.3),
+        1px -1px 0 rgba(0, 0, 0, 0.3),
+        -1px 1px 0 rgba(0, 0, 0, 0.3),
+        1px 1px 0 rgba(0, 0, 0, 0.3);
     }
 
     /* Enhanced glow effects */
