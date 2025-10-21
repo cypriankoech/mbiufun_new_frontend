@@ -133,7 +133,7 @@ export interface QuizResultsData extends QuizSubmissionResponse {
           Detailed Results
         </h3>
         
-        <div class="max-h-[40vh] sm:max-h-[50vh] overflow-y-auto pr-1 sm:pr-2 space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div class="max-h-[55vh] sm:max-h-[50vh] overflow-y-auto pr-1 sm:pr-2 space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <div *ngFor="let response of data.responses; let i = index"
                class="bg-white border-2 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 transition-all duration-200 hover:shadow-md"
                [ngClass]="{
