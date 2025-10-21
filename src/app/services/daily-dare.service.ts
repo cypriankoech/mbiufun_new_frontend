@@ -41,20 +41,20 @@ export class DailyDareService {
         if (v !== undefined && v !== null) queryParams = queryParams.set(k, String(v));
       });
     }
-    return this.http.get<DailyDare[]>(`${environment.apiUrl}api/v1/game/daily-dare/`, {
+    return this.http.get<DailyDare[]>(`${environment.apiUrl}api/v1/games/daily-dare/`, {
       headers: this.headers,
       params: queryParams,
     });
   }
 
   fetchToday(): Observable<DailyDare[]> {
-    return this.http.get<DailyDare[]>(`${environment.apiUrl}api/v1/game/daily-dare/detail/`, {
+    return this.http.get<DailyDare[]>(`${environment.apiUrl}api/v1/games/daily-dare/detail/`, {
       headers: this.headers,
     });
   }
 
   fetchTodayQuiz(): Observable<QuizDare[]> {
-    return this.http.get<QuizDare[]>(`${environment.apiUrl}api/v1/game/daily-dare/quiz/`, {
+    return this.http.get<QuizDare[]>(`${environment.apiUrl}api/v1/games/daily-dare/quiz/`, {
       headers: this.headers,
     });
   }
@@ -63,7 +63,7 @@ export class DailyDareService {
     // Note: Backend doesn't have /daily-dare/{id}/ endpoint
     // Try fetching from list and filter, or use today's endpoint
     const params = new HttpParams().set('id', String(id));
-    return this.http.get<DailyDare>(`${environment.apiUrl}api/v1/game/daily-dare/`, {
+    return this.http.get<DailyDare>(`${environment.apiUrl}api/v1/games/daily-dare/`, {
       headers: this.headers,
       params
     }).pipe((source: any) => source); // allow consumers to map as needed
@@ -72,26 +72,26 @@ export class DailyDareService {
   fetchQuizById(id: number): Observable<QuizDare> {
     // Try fetching quiz with ID as query param
     const params = new HttpParams().set('id', String(id));
-    return this.http.get<QuizDare>(`${environment.apiUrl}api/v1/game/daily-dare/quiz/`, {
+    return this.http.get<QuizDare>(`${environment.apiUrl}api/v1/games/daily-dare/quiz/`, {
       headers: this.headers,
       params
     });
   }
 
   submitQuizAnswers(payload: any): Observable<any> {
-    return this.http.post(`${environment.apiUrl}api/v1/game/daily-dare/quiz/submit/`, payload, {
+    return this.http.post(`${environment.apiUrl}api/v1/games/daily-dare/quiz/submit/`, payload, {
       headers: this.headers,
     });
   }
 
   fetchQuizResults(dareId: number): Observable<QuizSubmissionResponse> {
-    return this.http.get<QuizSubmissionResponse>(`${environment.apiUrl}api/v1/game/daily-dare/${dareId}/results/`, {
+    return this.http.get<QuizSubmissionResponse>(`${environment.apiUrl}api/v1/games/daily-dare/${dareId}/results/`, {
       headers: this.headers,
     });
   }
 
   fetchHistory(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}api/v1/game/daily-dare/history/`, {
+    return this.http.get<any[]>(`${environment.apiUrl}api/v1/games/daily-dare/history/`, {
       headers: this.headers,
     });
   }
