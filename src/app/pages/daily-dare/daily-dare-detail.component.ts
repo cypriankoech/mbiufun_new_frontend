@@ -653,7 +653,10 @@ export class DailyDareDetailComponent implements OnInit {
   }
 
   viewCompletedResults() {
-    if (!this.dare || !this.dare.id) {
+    // Use quiz ID if available, otherwise fall back to dare ID
+    const quizId = this.quiz?.id || this.dare?.id;
+    
+    if (!quizId) {
       this.snackBar.open('Unable to load results', 'OK', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -661,9 +664,9 @@ export class DailyDareDetailComponent implements OnInit {
       return;
     }
 
-    console.log('Fetching results for dare ID:', this.dare.id);
+    console.log('Fetching results for quiz ID:', quizId, '(dare ID:', this.dare?.id, ')');
 
-    this.dareService.fetchQuizResults(this.dare.id).subscribe({
+    this.dareService.fetchQuizResults(quizId).subscribe({
       next: (response) => {
         console.log('Quiz results loaded:', response);
 
@@ -781,6 +784,8 @@ export class DailyDareDetailComponent implements OnInit {
           this.isCompleted = true;
           this.userScore = (q as any)?.user_score || 0;
           this.loadingQuiz = false;
+          // Store the quiz object (without questions) so we can fetch results later
+          this.quiz = q;
           this.snackBar.open('✅ You have already completed this quiz!', 'OK', {
             duration: 4000,
             panelClass: ['success-snackbar']
