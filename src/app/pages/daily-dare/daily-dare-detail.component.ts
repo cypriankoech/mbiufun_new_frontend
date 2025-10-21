@@ -597,10 +597,15 @@ export class DailyDareDetailComponent implements OnInit {
 
         // Build selected answers map for the dialog
         const selectedAnswersMap: { [questionId: number]: number } = {};
-        Object.entries(this.answers).forEach(([questionIndex, optionId]) => {
+        Object.entries(this.answers).forEach(([questionIndex, optionIndex]) => {
           const question = this.quiz?.questions?.[Number(questionIndex)];
           if (question) {
-            selectedAnswersMap[question.id] = Number(optionId);
+            // Get the actual option object using the option index
+            const selectedOption = question.options?.[Number(optionIndex)];
+            if (selectedOption && selectedOption.id) {
+              // Store the actual option ID from the database, not the index
+              selectedAnswersMap[question.id] = selectedOption.id;
+            }
           }
         });
 
@@ -809,14 +814,20 @@ export class DailyDareDetailComponent implements OnInit {
       return false;
     }
     
-    // Question should have a "question" property (string) and "options" array
-    const hasQuestion = typeof firstQ.question === 'string' ||  (firstQ.question && typeof firstQ.question === 'object');
+    // Question should have a "question" or "question_text" property and "options" array
+    // The API returns "question_text", but we might also support "question"
+    const hasQuestion = 
+      typeof firstQ.question === 'string' || 
+      typeof firstQ.question_text === 'string' ||
+      (firstQ.question && typeof firstQ.question === 'object');
     const hasOptions = Array.isArray(firstQ.options) && firstQ.options.length > 0;
     
     console.log('Question validation:', {
       hasQuestion,
       hasOptions,
       questionType: typeof firstQ.question,
+      questionTextType: typeof firstQ.question_text,
+      hasQuestionText: !!firstQ.question_text,
       optionsLength: hasOptions ? firstQ.options.length : 0
     });
     

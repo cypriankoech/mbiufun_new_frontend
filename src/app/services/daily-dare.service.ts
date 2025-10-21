@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthenticationService } from './authentication.service';
 
@@ -70,12 +71,49 @@ export class DailyDareService {
   }
 
   fetchQuizById(id: number): Observable<QuizDare> {
-    // Try fetching quiz with ID as query param
+    // The ID here is actually the dare ID (parent), not the quiz ID
+    // Fetch all quizzes for this dare and return the first one (or the one with matching ID if found)
     const params = new HttpParams().set('id', String(id));
-    return this.http.get<QuizDare>(`${environment.apiUrl}api/v1/games/daily-dare/quiz/`, {
+    return this.http.get<any>(`${environment.apiUrl}api/v1/games/daily-dare/quiz/`, {
       headers: this.headers,
       params
-    });
+    }).pipe(
+      map((response: any) => {
+        console.log('fetchQuizById: Raw API response:', response);
+        console.log('fetchQuizById: Response is array?', Array.isArray(response));
+        
+        // If response is an array, try to find quiz with matching ID first
+        if (Array.isArray(response)) {
+          console.log('fetchQuizById: API returned array of', response.length, 'quizzes');
+          
+          // First, try to find exact match by ID
+          let quiz = response.find((q: any) => q.id === id);
+          
+          // If not found, just use the first quiz
+          if (!quiz && response.length > 0) {
+            console.log('fetchQuizById: No exact ID match, using first quiz from array');
+            quiz = response[0];
+          }
+          
+          if (quiz) {
+            console.log('fetchQuizById: Selected quiz:', {
+              id: quiz.id,
+              title: quiz.title,
+              hasQuestions: !!quiz.questions,
+              questionCount: quiz.questions?.length
+            });
+            return quiz;
+          }
+          
+          console.error('fetchQuizById: Empty array returned from API');
+          return null;
+        }
+        
+        // If response is a single object, return it
+        console.log('fetchQuizById: API returned single quiz object');
+        return response;
+      })
+    );
   }
 
   submitQuizAnswers(payload: any): Observable<any> {
