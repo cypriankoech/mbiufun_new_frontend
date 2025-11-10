@@ -151,8 +151,9 @@ import { FeedPost } from '@app/services/feed.service';
       <!-- Action Bar -->
       <div class="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-100">
         <div class="flex items-center justify-between">
-          <!-- Like Button -->
+          <!-- Like Button - Hidden for activity posts (event type) -->
           <button
+            *ngIf="post.post_type !== 'event'"
             (click)="toggleLike()"
             [disabled]="likeLoading"
             class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 group"
