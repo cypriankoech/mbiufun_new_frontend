@@ -151,22 +151,6 @@ import { FeedPost } from '@app/services/feed.service';
       <!-- Action Bar -->
       <div class="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-100">
         <div class="flex items-center justify-between">
-          <!-- Like Button - Hidden for activity posts (event type) -->
-          <button
-            *ngIf="post.post_type !== 'event'"
-            (click)="toggleLike()"
-            [disabled]="likeLoading"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 group"
-            [class.text-red-500]="post.is_liked"
-            [attr.aria-label]="post.is_liked ? 'Unlike post' : 'Like post'"
-            [attr.aria-pressed]="post.is_liked"
-          >
-            <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" [class.fill-current]="post.is_liked" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            <span class="text-sm font-medium">{{ post.likes_count }}</span>
-          </button>
-
           <!-- Comment Button -->
           <button
             (click)="openComments()"
@@ -200,13 +184,10 @@ export class FeedCardComponent {
   private readonly snackBar = inject(MatSnackBar);
 
   @Input({ required: true }) post!: FeedPost;
-  @Output() like = new EventEmitter<number>();
-  @Output() unlike = new EventEmitter<number>();
   @Output() comment = new EventEmitter<number>();
   @Output() delete = new EventEmitter<number>();
 
   showMenu = false;
-  likeLoading = false;
 
   toggleMenu(): void {
     this.showMenu = !this.showMenu;
@@ -214,23 +195,6 @@ export class FeedCardComponent {
 
   viewProfile(): void {
     this.router.navigate(['/app/profile', this.post.author.id]);
-  }
-
-  toggleLike(): void {
-    if (this.likeLoading) return;
-    
-    this.likeLoading = true;
-    
-    if (this.post.is_liked) {
-      this.unlike.emit(this.post.id);
-    } else {
-      this.like.emit(this.post.id);
-    }
-    
-    // Reset loading state after a short delay
-    setTimeout(() => {
-      this.likeLoading = false;
-    }, 500);
   }
 
   openComments(): void {

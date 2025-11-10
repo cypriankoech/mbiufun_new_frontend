@@ -133,8 +133,6 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
         <app-feed-card
           *ngFor="let post of posts; trackBy: trackByPostId"
           [post]="post"
-          (like)="onLike($event)"
-          (unlike)="onUnlike($event)"
           (comment)="onComment($event)"
           (delete)="onDelete($event)"
         ></app-feed-card>
@@ -445,58 +443,6 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
   onPostCreated(): void {
     this.loadFeed(1);
-  }
-
-  onLike(postId: number): void {
-    const post = this.posts.find(p => p.id === postId);
-    if (!post) return;
-
-    // Optimistic update
-    post.is_liked = true;
-    post.likes_count++;
-
-    this.feedService.likePost(postId).subscribe({
-      next: (response) => {
-        post.likes_count = response.likes_count;
-      },
-      error: (error) => {
-        console.error('Failed to like post:', error);
-        // Revert optimistic update
-        post.is_liked = false;
-        post.likes_count--;
-        this.snackBar.open('Failed to like post', 'Close', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
-        });
-      }
-    });
-  }
-
-  onUnlike(postId: number): void {
-    const post = this.posts.find(p => p.id === postId);
-    if (!post) return;
-
-    // Optimistic update
-    post.is_liked = false;
-    post.likes_count--;
-
-    this.feedService.unlikePost(postId).subscribe({
-      next: (response) => {
-        post.likes_count = response.likes_count;
-      },
-      error: (error) => {
-        console.error('Failed to unlike post:', error);
-        // Revert optimistic update
-        post.is_liked = true;
-        post.likes_count++;
-        this.snackBar.open('Failed to unlike post', 'Close', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
-        });
-      }
-    });
   }
 
   onComment(postId: number): void {
