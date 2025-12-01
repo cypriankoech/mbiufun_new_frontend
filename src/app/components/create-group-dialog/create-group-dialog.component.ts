@@ -527,6 +527,10 @@ export class CreateGroupDialogComponent {
       this.groupsService.createGroup(groupData).subscribe({
         next: (response) => {
           console.log('Group created successfully:', response);
+          
+          // Get participant count from response
+          const participantCount = response.participant_count || response.participantCount || (response.participant?.chattingTo?.length || 0);
+          
           this.snackBar.open(`✨ "${groupData.name}" bubble created successfully!`, 'View', {
             duration: 4000,
             horizontalPosition: 'center',
@@ -536,6 +540,8 @@ export class CreateGroupDialogComponent {
           this.dialogRef.close({
             ...groupData,
             id: response.id || response.group_id || response.participant?.id,
+            participants: response.participant?.chattingTo || [],
+            participantCount: participantCount,
             createdAt: new Date().toISOString()
           });
         },

@@ -284,11 +284,12 @@ export class GroupsComponent implements OnInit, OnDestroy {
       if (result) {
         // Group was created successfully, navigate to the new chat
         console.log('Group created successfully, navigating to chat:', result);
+        const memberCount = result.participantCount || result.participants?.length || 0;
         this.router.navigate(['/app/chat', result.id], {
           state: {
             newlyCreated: true,
             groupName: result.name,
-            memberCount: (result.participants?.length || 0) // participants already includes creator
+            memberCount: memberCount
           }
         });
       }
