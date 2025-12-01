@@ -372,6 +372,43 @@ export class RegisterComponent implements OnInit {
     return missing;
   }
 
+  /**
+   * Parse field-specific errors from backend response
+   * Handles errors like: {"email":["user with this email already exists."]}
+   * @param errorObject - The error object from backend
+   * @returns Array of formatted error messages
+   */
+  private parseFieldErrors(errorObject: any): string[] {
+    const errors: string[] = [];
+    const fieldNameMap: { [key: string]: string } = {
+      'email': 'Email',
+      'password': 'Password',
+      'confirm': 'Password confirmation',
+      'first_name': 'First name',
+      'last_name': 'Last name',
+      'location': 'Location',
+      'tribe': 'Tribe',
+      'username': 'Username'
+    };
+
+    // Iterate through each field in the error object
+    for (const [field, messages] of Object.entries(errorObject)) {
+      const fieldName = fieldNameMap[field] || field;
+      
+      if (Array.isArray(messages)) {
+        // Handle array of error messages for a field
+        messages.forEach((msg: string) => {
+          errors.push(`${fieldName}: ${msg}`);
+        });
+      } else if (typeof messages === 'string') {
+        // Handle single string error message
+        errors.push(`${fieldName}: ${messages}`);
+      }
+    }
+
+    return errors;
+  }
+
   passwordMatchValidator(control: AbstractControl): { [key: string]: boolean } | null {
     const password = control.get('password');
     const confirmPassword = control.get('confirmPassword');
@@ -543,14 +580,43 @@ export class RegisterComponent implements OnInit {
           this.isLoading = false;
 
           let errorMessage = 'Registration failed. Please try again.';
-          if (error.error?.err) {
-            console.log('🔍 REGISTER COMPONENT: Error has .err field:', error.error.err);
-            errorMessage = Array.isArray(error.error.err)
-              ? error.error.err[0]
-              : error.error.err;
-          } else if (error.error?.error) {
-            console.log('🔍 REGISTER COMPONENT: Error has .error field:', error.error.error);
-            errorMessage = error.error.error;
+          
+          // Parse error message from various error formats
+          if (error.error) {
+            // Case 1: Field-specific errors like {"email":["user with this email already exists."]}
+            if (typeof error.error === 'object' && !error.error.err && !error.error.error) {
+              const fieldErrors = this.parseFieldErrors(error.error);
+              if (fieldErrors.length > 0) {
+                console.log('🔍 REGISTER COMPONENT: Found field-specific errors:', fieldErrors);
+                errorMessage = fieldErrors.join(' ');
+              }
+            }
+            // Case 2: Standard error format with .err field
+            else if (error.error?.err) {
+              console.log('🔍 REGISTER COMPONENT: Error has .err field:', error.error.err);
+              errorMessage = Array.isArray(error.error.err)
+                ? error.error.err[0]
+                : error.error.err;
+            }
+            // Case 3: Standard error format with .error field
+            else if (error.error?.error) {
+              console.log('🔍 REGISTER COMPONENT: Error has .error field:', error.error.error);
+              errorMessage = error.error.error;
+            }
+            // Case 4: Direct string error message
+            else if (typeof error.error === 'string') {
+              console.log('🔍 REGISTER COMPONENT: Error is a string:', error.error);
+              errorMessage = error.error;
+            }
+          }
+          
+          // Case 5: Network errors or other HTTP errors
+          if (error.status === 0) {
+            errorMessage = 'Network error. Please check your internet connection.';
+          } else if (error.status === 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.status === 503) {
+            errorMessage = 'Service temporarily unavailable. Please try again later.';
           }
 
           console.log('💬 REGISTER COMPONENT: Final error message:', errorMessage);

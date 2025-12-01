@@ -235,12 +235,29 @@ interface GroupInfo {
 
           <!-- Members List -->
           <div class="space-y-3" *ngIf="groupInfo">
-            <div *ngFor="let member of groupInfo.participants" class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
-                <span class="text-sm font-semibold text-gray-600">
-                  {{ member.first_name.charAt(0) }}{{ member.last_name.charAt(0) }}
-                </span>
+            <!-- Current User (You) -->
+            <div class="flex items-center gap-3 bg-[#70AEB9]/5 -mx-2 px-2 py-2 rounded-lg">
+              <div class="w-10 h-10 bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] rounded-full flex items-center justify-center">
+                <span class="text-sm font-semibold text-white">You</span>
               </div>
+              <div class="flex-1">
+                <p class="font-medium text-gray-900">You</p>
+                <p class="text-xs text-[#70AEB9] font-medium">Group Member</p>
+              </div>
+            </div>
+
+            <!-- Other Members -->
+            <div *ngFor="let member of groupInfo.participants" class="flex items-center gap-3">
+              <div *ngIf="member.profile_image; else noAvatar" class="w-10 h-10 rounded-full overflow-hidden">
+                <img [src]="member.profile_image" [alt]="member.first_name" class="w-full h-full object-cover" />
+              </div>
+              <ng-template #noAvatar>
+                <div class="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
+                  <span class="text-sm font-semibold text-gray-600">
+                    {{ member.first_name?.charAt(0) || 'U' }}{{ member.last_name?.charAt(0) || '' }}
+                  </span>
+                </div>
+              </ng-template>
               <div class="flex-1">
                 <p class="font-medium text-gray-900">{{ member.first_name }} {{ member.last_name }}</p>
                 <p class="text-sm text-gray-500">@{{ member.username }}</p>
@@ -356,16 +373,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         
         if (group) {
           this.groupName = group.participant.displayName;
+          
+          // Map chattingTo which has nested participant objects
+          const participants = (group.participant.chattingTo || []).map((p: any) => {
+            const participant = p.participant || p; // Handle both nested and direct formats
+            const fullName = participant.displayName || '';
+            const nameParts = fullName.split(' ');
+            
+            return {
+              id: participant.id,
+              first_name: nameParts[0] || 'User',
+              last_name: nameParts.slice(1).join(' ') || '',
+              username: participant.username || participant.id,
+              profile_image: participant.avatar
+            };
+          });
+          
           this.groupInfo = {
             id: group.participant.id,
             display_name: group.participant.displayName,
-            participants: group.participant.chattingTo.map((p: any) => ({
-              id: p.participant.id,
-              first_name: p.participant.displayName.split(' ')[0],
-              last_name: p.participant.displayName.split(' ')[1] || '',
-              username: p.participant.id,
-              profile_image: p.participant.avatar
-            }))
+            participants: participants
           };
         } else {
           this.groupName = 'Group Chat';

@@ -5,11 +5,23 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 
 export interface GroupParticipant {
-  participantType: number;
-  id: number;
-  username: string;
-  avatar: string;
-  status: number;
+  participant?: {
+    participantType: number;
+    id: number;
+    username: string;
+    displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    avatar: string;
+    status: number;
+  };
+  // Support both nested and flat formats
+  participantType?: number;
+  id?: number;
+  username?: string;
+  displayName?: string;
+  avatar?: string;
+  status?: number;
 }
 
 export interface GroupData {
@@ -129,13 +141,18 @@ export class GroupsService {
       const participant = apiGroup.participant;
       const chattingTo = participant.chattingTo || [];
 
-      // Create recent members from chattingTo
-      const recentMembers: GroupMember[] = chattingTo.slice(0, 4).map(p => ({
-        id: p.id,
-        name: p.username || `User ${p.id}`,
-        initials: this.getInitials(p.username || `User ${p.id}`),
-        avatar: p.avatar
-      }));
+      // Create recent members from chattingTo (handle nested participant structure)
+      const recentMembers: GroupMember[] = chattingTo.slice(0, 4).map(item => {
+        const p = item.participant || item; // Handle both nested and direct formats
+        const displayName = p.displayName || p.username || `User ${p.id}`;
+        
+        return {
+          id: p.id,
+          name: displayName,
+          initials: this.getInitials(displayName),
+          avatar: p.avatar
+        };
+      });
 
       // Generate mock last message (in a real app, this would come from the API)
       const lastMessage = this.generateMockLastMessage(recentMembers);

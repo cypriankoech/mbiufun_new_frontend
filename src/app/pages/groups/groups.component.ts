@@ -288,7 +288,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
           state: {
             newlyCreated: true,
             groupName: result.name,
-            memberCount: (result.participants?.length || 0) + 1 // +1 for creator
+            memberCount: (result.participants?.length || 0) // participants already includes creator
           }
         });
       }

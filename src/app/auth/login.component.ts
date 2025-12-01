@@ -140,12 +140,48 @@ export class LoginComponent implements OnInit {
           this.isLoading = false;
 
           let errorMessage = 'Login failed. Please check your credentials.';
-          if (error.error?.err) {
-            errorMessage = Array.isArray(error.error.err)
-              ? error.error.err[0]
-              : error.error.err;
-          } else if (error.error?.error) {
-            errorMessage = error.error.error;
+          
+          // Parse error message from various error formats
+          if (error.error) {
+            // Case 1: Field-specific errors like {"username":["Invalid credentials"]}
+            if (typeof error.error === 'object' && !error.error.err && !error.error.error) {
+              const fieldErrors = this.parseFieldErrors(error.error);
+              if (fieldErrors.length > 0) {
+                console.log('🔍 LOGIN COMPONENT: Found field-specific errors:', fieldErrors);
+                errorMessage = fieldErrors.join(' ');
+              }
+            }
+            // Case 2: Standard error format with .err field
+            else if (error.error?.err) {
+              errorMessage = Array.isArray(error.error.err)
+                ? error.error.err[0]
+                : error.error.err;
+            }
+            // Case 3: Standard error format with .error field
+            else if (error.error?.error) {
+              errorMessage = error.error.error;
+            }
+            // Case 4: Direct string error message
+            else if (typeof error.error === 'string') {
+              errorMessage = error.error;
+            }
+            // Case 5: Non-field errors (like "detail" field in DRF)
+            else if (error.error?.detail) {
+              errorMessage = error.error.detail;
+            }
+          }
+          
+          // Case 6: Network errors or other HTTP errors
+          if (error.status === 0) {
+            errorMessage = 'Network error. Please check your internet connection.';
+          } else if (error.status === 401) {
+            errorMessage = 'Invalid email/username or password. Please try again.';
+          } else if (error.status === 403) {
+            errorMessage = 'Account not activated. Please check your email for the activation link.';
+          } else if (error.status === 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.status === 503) {
+            errorMessage = 'Service temporarily unavailable. Please try again later.';
           }
 
           console.log('💬 LOGIN COMPONENT: Showing error message:', errorMessage);
@@ -180,5 +216,47 @@ export class LoginComponent implements OnInit {
 
   navigateToHome() {
     this.router.navigate(['/']);
+  }
+
+  /**
+   * Parse field-specific errors from backend response
+   * Handles errors like: {"username":["Invalid credentials"]}
+   * @param errorObject - The error object from backend
+   * @returns Array of formatted error messages
+   */
+  private parseFieldErrors(errorObject: any): string[] {
+    const errors: string[] = [];
+    const fieldNameMap: { [key: string]: string } = {
+      'username': 'Username/Email',
+      'password': 'Password',
+      'email': 'Email',
+      'non_field_errors': 'Error'
+    };
+
+    // Iterate through each field in the error object
+    for (const [field, messages] of Object.entries(errorObject)) {
+      const fieldName = fieldNameMap[field] || field;
+      
+      if (Array.isArray(messages)) {
+        // Handle array of error messages for a field
+        messages.forEach((msg: string) => {
+          // For non-field errors, don't prepend field name
+          if (field === 'non_field_errors') {
+            errors.push(msg);
+          } else {
+            errors.push(`${fieldName}: ${msg}`);
+          }
+        });
+      } else if (typeof messages === 'string') {
+        // Handle single string error message
+        if (field === 'non_field_errors') {
+          errors.push(messages);
+        } else {
+          errors.push(`${fieldName}: ${messages}`);
+        }
+      }
+    }
+
+    return errors;
   }
 }
