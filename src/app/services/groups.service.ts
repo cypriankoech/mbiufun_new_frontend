@@ -20,6 +20,7 @@ export interface GroupData {
     avatar: string;
     status: number;
     chattingTo: GroupParticipant[];
+    participantCount?: number;
   };
   metadata: {
     totalUnreadMessages: number;
@@ -131,7 +132,7 @@ export class GroupsService {
         id: participant.id,
         name: participant.displayName,
         description: this.generateMockDescription(participant.displayName),
-        memberCount: chattingTo.length, // chattingTo already includes all participants
+        memberCount: participant.participantCount || chattingTo.length, // Use API participantCount if available, otherwise calculate from chattingTo
         unreadCount: apiGroup.metadata.totalUnreadMessages || Math.floor(Math.random() * 8),
         hasActivity: Math.random() > 0.5,
         activityType,
