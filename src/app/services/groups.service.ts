@@ -131,7 +131,7 @@ export class GroupsService {
         id: participant.id,
         name: participant.displayName,
         description: this.generateMockDescription(participant.displayName),
-        memberCount: chattingTo.length + 1, // Include current user
+        memberCount: chattingTo.length, // chattingTo already includes all participants
         unreadCount: apiGroup.metadata.totalUnreadMessages || Math.floor(Math.random() * 8),
         hasActivity: Math.random() > 0.5,
         activityType,
