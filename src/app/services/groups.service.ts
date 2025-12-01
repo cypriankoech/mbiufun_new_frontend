@@ -144,13 +144,15 @@ export class GroupsService {
       // Create recent members from chattingTo (handle nested participant structure)
       const recentMembers: GroupMember[] = chattingTo.slice(0, 4).map(item => {
         const p = item.participant || item; // Handle both nested and direct formats
-        const displayName = p.displayName || p.username || `User ${p.id}`;
+        const participantId = p.id || (item as any).id || 0;
+        const displayName = p.displayName || p.username || `User ${participantId}`;
+        const avatarUrl = p.avatar || (item as any).avatar || '';
         
         return {
-          id: p.id,
+          id: participantId,
           name: displayName,
           initials: this.getInitials(displayName),
-          avatar: p.avatar
+          avatar: avatarUrl
         };
       });
 
