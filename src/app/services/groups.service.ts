@@ -108,6 +108,22 @@ export class GroupsService {
     );
   }
 
+  addParticipant(groupId: string, identifier: string): Observable<any> {
+    const headers = this.getHeaders();
+
+    const payload = {
+      group_id: groupId,
+      identifier: identifier // username or email
+    };
+
+    return this.http.post(`${this.baseUrl}/add_participant/`, payload, { headers }).pipe(
+      catchError(error => {
+        console.error('Failed to add participant:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   private transformGroups(apiGroups: GroupData[]): Group[] {
     return apiGroups.map(apiGroup => {
       const participant = apiGroup.participant;

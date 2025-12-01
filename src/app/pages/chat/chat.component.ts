@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@environments/environment';
+import { GroupsService } from '@app/services/groups.service';
 import { interval, Subscription } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
 
@@ -190,10 +191,49 @@ interface GroupInfo {
         </form>
       </div>
 
-      <!-- Group Info Sidebar (Optional - for future) -->
+      <!-- Group Info Sidebar -->
       <div *ngIf="showGroupInfo" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" (click)="toggleGroupInfo()">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
-          <h3 class="text-xl font-bold text-gray-900 mb-4">Group Members</h3>
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Group Members</h3>
+            <button
+              (click)="toggleAddParticipant()"
+              class="px-3 py-1 bg-[#70AEB9] hover:bg-[#5a9aa3] text-white text-sm rounded-lg transition-colors duration-200"
+            >
+              Add Member
+            </button>
+          </div>
+
+          <!-- Add Participant Form -->
+          <div *ngIf="showAddParticipant" class="mb-4 p-4 bg-gray-50 rounded-lg">
+            <form [formGroup]="addParticipantForm" (ngSubmit)="addParticipant()">
+              <div class="flex gap-2">
+                <input
+                  formControlName="identifier"
+                  type="text"
+                  placeholder="Enter username or email"
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 focus:border-[#70AEB9] text-sm"
+                  [disabled]="isAddingParticipant"
+                />
+                <button
+                  type="submit"
+                  [disabled]="!addParticipantForm.valid || isAddingParticipant"
+                  class="px-4 py-2 bg-[#70AEB9] hover:bg-[#5a9aa3] text-white text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  <span *ngIf="!isAddingParticipant">Add</span>
+                  <span *ngIf="isAddingParticipant" class="flex items-center">
+                    <svg class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Adding...
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Members List -->
           <div class="space-y-3" *ngIf="groupInfo">
             <div *ngFor="let member of groupInfo.participants" class="flex items-center gap-3">
               <div class="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
@@ -201,12 +241,13 @@ interface GroupInfo {
                   {{ member.first_name.charAt(0) }}{{ member.last_name.charAt(0) }}
                 </span>
               </div>
-              <div>
+              <div class="flex-1">
                 <p class="font-medium text-gray-900">{{ member.first_name }} {{ member.last_name }}</p>
                 <p class="text-sm text-gray-500">@{{ member.username }}</p>
               </div>
             </div>
           </div>
+
           <button
             (click)="toggleGroupInfo()"
             class="mt-6 w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium transition-colors duration-200"
@@ -234,6 +275,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
   private readonly http = inject(HttpClient);
+  private readonly groupsService = inject(GroupsService);
 
   groupId: string = '';
   groupName: string = 'Loading...';
@@ -241,8 +283,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   messageForm: FormGroup;
   isLoading = true;
   isSending = false;
+  isAddingParticipant = false;
   showGroupInfo = false;
+  showAddParticipant = false;
   groupInfo: GroupInfo | null = null;
+  addParticipantForm: FormGroup;
 
   // New group welcome message
   isNewlyCreated = false;
@@ -255,6 +300,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor() {
     this.messageForm = this.fb.group({
       message: ['', [Validators.required, Validators.maxLength(500)]]
+    });
+
+    this.addParticipantForm = this.fb.group({
+      identifier: ['', [Validators.required]]
     });
   }
 
@@ -459,6 +508,49 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   toggleGroupInfo(): void {
     this.showGroupInfo = !this.showGroupInfo;
+    if (!this.showGroupInfo) {
+      this.showAddParticipant = false;
+      this.addParticipantForm.reset();
+    }
+  }
+
+  toggleAddParticipant(): void {
+    this.showAddParticipant = !this.showAddParticipant;
+    if (!this.showAddParticipant) {
+      this.addParticipantForm.reset();
+    }
+  }
+
+  addParticipant(): void {
+    if (!this.addParticipantForm.valid || this.isAddingParticipant) return;
+
+    this.isAddingParticipant = true;
+    const identifier = this.addParticipantForm.value.identifier.trim();
+
+    this.groupsService.addParticipant(this.groupId, identifier).subscribe({
+      next: (response) => {
+        this.snackBar.open('Member added successfully!', 'Close', { duration: 3000 });
+
+        // Update the group info to reflect the new member
+        this.loadGroupInfo();
+
+        // Reset form and hide add participant section
+        this.addParticipantForm.reset();
+        this.showAddParticipant = false;
+        this.isAddingParticipant = false;
+      },
+      error: (error) => {
+        console.error('Failed to add participant:', error);
+
+        let errorMessage = 'Failed to add member';
+        if (error.error?.detail) {
+          errorMessage = error.error.detail;
+        }
+
+        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+        this.isAddingParticipant = false;
+      }
+    });
   }
 
   goBack(): void {
