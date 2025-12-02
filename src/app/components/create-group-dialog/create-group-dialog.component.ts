@@ -520,7 +520,7 @@ export class CreateGroupDialogComponent {
         description: this.groupForm.value.description?.trim() || '',
         category: this.groupForm.value.category,
         privacy: this.groupForm.value.privacy,
-        participants: this.selectedParticipants.map(p => p.username) // Include selected participants
+        participants: this.selectedParticipants.filter(p => p.username && p.username.trim()).map(p => p.username.trim()) // Include selected participants with valid usernames
       };
 
       // Call the backend API to create the group
