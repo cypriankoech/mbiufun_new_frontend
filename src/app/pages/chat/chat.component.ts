@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { GroupsService } from '@app/services/groups.service';
-import { interval, Subscription } from 'rxjs';
-import { switchMap, startWith } from 'rxjs/operators';
+import { interval, Subscription, of } from 'rxjs';
+import { switchMap, startWith, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface ChatMessage {
   id: number;
@@ -35,6 +35,14 @@ interface GroupInfo {
     username: string;
     profile_image?: string;
   }>;
+}
+
+interface UserSearchResult {
+  id: number;
+  first_name: string;
+  last_name: string;
+  mbiu_username: string;
+  profile_image?: string;
 }
 
 @Component({
@@ -207,29 +215,63 @@ interface GroupInfo {
           <!-- Add Participant Form -->
           <div *ngIf="showAddParticipant" class="mb-4 p-4 bg-gray-50 rounded-lg">
             <form [formGroup]="addParticipantForm" (ngSubmit)="addParticipant()">
-              <div class="flex gap-2">
-                <input
-                  formControlName="identifier"
-                  type="text"
-                  placeholder="Enter username or email"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 focus:border-[#70AEB9] text-sm"
-                  [disabled]="isAddingParticipant"
-                />
-                <button
-                  type="submit"
-                  [disabled]="!addParticipantForm.valid || isAddingParticipant"
-                  class="px-4 py-2 bg-[#70AEB9] hover:bg-[#5a9aa3] text-white text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  <span *ngIf="!isAddingParticipant">Add</span>
-                  <span *ngIf="isAddingParticipant" class="flex items-center">
-                    <svg class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24">
+              <div class="relative">
+                <div class="flex gap-2">
+                  <input
+                    formControlName="identifier"
+                    type="text"
+                    placeholder="Search by name or username..."
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 focus:border-[#70AEB9] text-sm"
+                    [disabled]="isAddingParticipant"
+                    autocomplete="off"
+                  />
+                  <div class="absolute right-12 top-3 text-gray-400" *ngIf="isSearching">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Adding...
-                  </span>
-                </button>
+                  </div>
+                </div>
+
+                <!-- Search Results Dropdown -->
+                <div *ngIf="showSearchResults" class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div *ngIf="!isSearching && searchResults.length === 0" class="p-4 text-center text-gray-500 text-sm">
+                    No users found
+                  </div>
+
+                  <div *ngIf="!isSearching && searchResults.length > 0">
+                    <button
+                      *ngFor="let user of searchResults"
+                      (click)="selectUserFromSearch(user)"
+                      type="button"
+                      class="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div class="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm font-semibold text-gray-600">
+                          {{ user.first_name.charAt(0).toUpperCase() }}{{ user.last_name.charAt(0).toUpperCase() }}
+                        </span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-gray-900 truncate">
+                          {{ user.first_name }} {{ user.last_name }}
+                        </div>
+                        <div class="text-sm text-gray-500 truncate">
+                          @{{ user.mbiu_username }}
+                        </div>
+                      </div>
+                      <div class="text-[#70AEB9]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              <p class="text-xs text-gray-500 mt-2">
+                Type at least 2 characters to search for members
+              </p>
             </form>
           </div>
 
@@ -305,6 +347,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   showAddParticipant = false;
   groupInfo: GroupInfo | null = null;
   addParticipantForm: FormGroup;
+  
+  // Search functionality for adding participants
+  searchResults: UserSearchResult[] = [];
+  isSearching = false;
+  showSearchResults = false;
 
   // New group welcome message
   isNewlyCreated = false;
@@ -321,6 +368,35 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.addParticipantForm = this.fb.group({
       identifier: ['', [Validators.required]]
+    });
+
+    // Setup search with debouncing for add participant
+    this.addParticipantForm.get('identifier')?.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (query && query.trim().length >= 2) {
+          this.isSearching = true;
+          return this.searchUsers(query.trim());
+        } else {
+          this.searchResults = [];
+          this.showSearchResults = false;
+          this.isSearching = false;
+          return of([]);
+        }
+      })
+    ).subscribe({
+      next: (results: UserSearchResult[]) => {
+        this.searchResults = results;
+        this.showSearchResults = results.length > 0;
+        this.isSearching = false;
+      },
+      error: (error) => {
+        console.error('Search error:', error);
+        this.isSearching = false;
+        this.searchResults = [];
+        this.showSearchResults = false;
+      }
     });
   }
 
@@ -545,7 +621,41 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showAddParticipant = !this.showAddParticipant;
     if (!this.showAddParticipant) {
       this.addParticipantForm.reset();
+      this.searchResults = [];
+      this.showSearchResults = false;
     }
+  }
+
+  private searchUsers(query: string) {
+    const headers = this.getHeaders();
+    const params = new HttpParams()
+      .set('s', query)
+      .set('users', '1')
+      .set('per_page', '10');
+
+    return this.http.get<{ users: UserSearchResult[] }>(
+      `${environment.apiUrl.replace(/\/$/, '')}/api/v1/search`,
+      { headers, params }
+    ).pipe(
+      switchMap(response => of(response.users || []))
+    );
+  }
+
+  selectUserFromSearch(user: UserSearchResult): void {
+    // Check if user is already a participant
+    const isAlreadyMember = this.groupInfo?.participants.some(p => p.id === user.id);
+    if (isAlreadyMember) {
+      this.snackBar.open('This user is already a member', 'Close', { duration: 3000 });
+      return;
+    }
+
+    // Set the username in the form
+    this.addParticipantForm.patchValue({ identifier: user.mbiu_username });
+    this.searchResults = [];
+    this.showSearchResults = false;
+
+    // Automatically trigger add participant
+    this.addParticipant();
   }
 
   addParticipant(): void {
