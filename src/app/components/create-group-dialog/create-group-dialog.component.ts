@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 import { environment } from '@environments/environment';
 import { GroupsService } from '@app/services/groups.service';
@@ -36,7 +37,8 @@ interface SelectedParticipant {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule
+    MatDialogModule,
+    DragDropModule
   ],
   template: `
     <div class="relative bg-white rounded-3xl shadow-2xl overflow-hidden" style="max-width: 550px; max-height: 90vh;">
@@ -399,6 +401,10 @@ export class CreateGroupDialogComponent {
   isSearching = false;
   showSearchResults = false;
 
+  // Validation states
+  validationErrors: string[] = [];
+  showPreview = false;
+
   categories: CategoryOption[] = [
     { value: 'social', label: 'Social', icon: '🎉', color: '#FF6B6B' },
     { value: 'gaming', label: 'Gaming', icon: '🎮', color: '#4ECDC4' },
@@ -440,8 +446,8 @@ export class CreateGroupDialogComponent {
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
     this.groupForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      description: ['', [Validators.maxLength(200)]],
+      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      description: ['', [Validators.maxLength(500)]],
       category: ['social'],
       privacy: ['public']
     });
@@ -452,6 +458,13 @@ export class CreateGroupDialogComponent {
 
     // Set up search with debouncing
     this.setupSearch();
+
+    // Form validation on changes
+    this.groupForm.valueChanges.subscribe(() => {
+      if (this.showPreview) {
+        this.validateForm();
+      }
+    });
   }
 
   selectCategory(category: string): void {
@@ -503,6 +516,43 @@ export class CreateGroupDialogComponent {
     this.selectedParticipants = this.selectedParticipants.filter(p => p.id !== participantId);
   }
 
+  onParticipantDrop(event: CdkDragDrop<SelectedParticipant[]>): void {
+    moveItemInArray(this.selectedParticipants, event.previousIndex, event.currentIndex);
+  }
+
+  togglePreview(): void {
+    this.showPreview = !this.showPreview;
+    this.validateForm();
+  }
+
+  private validateForm(): void {
+    this.validationErrors = [];
+
+    const name = this.groupForm.get('name')?.value || '';
+    const description = this.groupForm.get('description')?.value || '';
+
+    // Name validation
+    if (!name.trim()) {
+      this.validationErrors.push('Group name is required');
+    } else if (name.length < 2) {
+      this.validationErrors.push('Group name must be at least 2 characters');
+    } else if (name.length > 100) {
+      this.validationErrors.push('Group name cannot exceed 100 characters');
+    } else if (!name.replace(/[\s\-_]/g, '').match(/^[a-zA-Z0-9]+$/)) {
+      this.validationErrors.push('Group name can only contain letters, numbers, spaces, hyphens, and underscores');
+    }
+
+    // Description validation
+    if (description.length > 500) {
+      this.validationErrors.push('Description cannot exceed 500 characters');
+    }
+
+    // Participant validation
+    if (this.selectedParticipants.length > 50) {
+      this.validationErrors.push('Cannot add more than 50 participants');
+    }
+  }
+
   private getHeaders() {
     const token = localStorage.getItem('mbiu-token');
     return {
@@ -548,15 +598,26 @@ export class CreateGroupDialogComponent {
         error: (error) => {
           console.error('Failed to create group:', error);
           this.isCreating = false;
-          
-          // Show error message
-          const errorMessage = error.error?.detail || error.error?.message || error.message || 'Failed to create bubble. Please try again.';
-          this.snackBar.open(`❌ ${errorMessage}`, 'Close', {
-            duration: 5000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top',
-            panelClass: ['error-snackbar']
-          });
+
+          // Handle validation errors from backend
+          if (error.error?.errors && Array.isArray(error.error.errors)) {
+            this.validationErrors = error.error.errors;
+            this.snackBar.open('❌ Please fix the validation errors below', 'Close', {
+              duration: 3000,
+              horizontalPosition: 'center',
+              verticalPosition: 'top',
+              panelClass: ['error-snackbar']
+            });
+          } else {
+            // Show error message
+            const errorMessage = error.error?.detail || error.error?.message || error.message || 'Failed to create bubble. Please try again.';
+            this.snackBar.open(`❌ ${errorMessage}`, 'Close', {
+              duration: 5000,
+              horizontalPosition: 'center',
+              verticalPosition: 'top',
+              panelClass: ['error-snackbar']
+            });
+          }
         }
       });
     } else {
