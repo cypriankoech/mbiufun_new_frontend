@@ -13,6 +13,8 @@ $medium: 780px;
 html,
 body {
   height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scrolling globally */
+  width: 100%;
 }
 
 body {

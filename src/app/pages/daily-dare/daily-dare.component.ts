@@ -32,16 +32,16 @@ import { DailyDareService, DailyDare } from '@app/services/daily-dare.service';
         </div>
 
         <!-- Filter/Sort Section -->
-        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex flex-wrap gap-2">
-            <button 
+        <div class="mb-6 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-4">
+          <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button
               *ngFor="let filter of filterOptions"
               (click)="setFilter(filter.value)"
               [class.bg-[#70AEB9]]="selectedFilter === filter.value"
               [class.text-white]="selectedFilter === filter.value"
               [class.bg-white]="selectedFilter !== filter.value"
               [class.text-gray-700]="selectedFilter !== filter.value"
-              class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border border-gray-200 hover:border-[#70AEB9] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#70AEB9]/50"
+              class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border border-gray-200 hover:border-[#70AEB9] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#70AEB9]/50 whitespace-nowrap"
             >
               {{ filter.label }}
             </button>

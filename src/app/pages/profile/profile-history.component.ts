@@ -83,23 +83,23 @@ import { TimelineService, TimelineEntry } from '@app/services/timeline.service';
         </div>
 
         <div *ngIf="!isLoading && activities.length > 0" class="space-y-6">
-          <!-- Filters & view toggle -->
-          <div class="bg-white rounded-lg shadow-sm p-4">
-            <div class="flex items-center justify-between gap-3 flex-wrap">
-              <div class="flex gap-2">
-                <button *ngFor="let filter of filters" 
-                        (click)="setActiveFilter(filter.key)"
-                        [class]="activeFilter === filter.key ? 'bg-[#70AEB9] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                        class="px-4 py-2 rounded-full text-sm transition-colors duration-200">
-                  {{ filter.label }}
-                </button>
-              </div>
-              <div class="flex items-center gap-2">
-                <button (click)="setViewMode('list')" [class]="viewMode==='list' ? 'bg-[#70AEB9] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-3 py-2 rounded-lg text-sm">List</button>
-                <button (click)="setViewMode('cards')" [class]="viewMode==='cards' ? 'bg-[#70AEB9] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-3 py-2 rounded-lg text-sm">Cards</button>
-              </div>
+        <!-- Filters & view toggle -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+              <button *ngFor="let filter of filters"
+                      (click)="setActiveFilter(filter.key)"
+                      [class]="activeFilter === filter.key ? 'bg-[#70AEB9] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                      class="px-4 py-2 rounded-full text-sm transition-colors duration-200 whitespace-nowrap">
+                {{ filter.label }}
+              </button>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button (click)="setViewMode('list')" [class]="viewMode==='list' ? 'bg-[#70AEB9] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-3 py-2 rounded-lg text-sm whitespace-nowrap">List</button>
+              <button (click)="setViewMode('cards')" [class]="viewMode==='cards' ? 'bg-[#70AEB9] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-3 py-2 rounded-lg text-sm whitespace-nowrap">Cards</button>
             </div>
           </div>
+        </div>
 
           <!-- Timeline (list view) -->
           <div *ngIf="viewMode==='list'" class="relative">
