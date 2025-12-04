@@ -37,13 +37,14 @@ import { CommonModule } from '@angular/common';
               </div>
             </div>
             
-            <!-- Brand Name with Gradient -->
+            <!-- Brand Name with Clean Design -->
             <div class="text-center">
-              <h1 class="text-5xl lg:text-6xl font-extrabold tracking-wider mb-2">
-                 <span class="text-white drop-shadow-2xl text-stroke">M</span><span class="text-gradient">biu</span>
+              <h1 class="text-5xl lg:text-6xl font-bold tracking-wide mb-2 relative">
+                <span class="text-white">Mbiufun</span>
+                <div class="absolute -bottom-2 left-1/2 transform translate-x-1/2 w-24 h-0.5 bg-white/40 rounded-full"></div>
               </h1>
-              <p class="text-white/80 text-lg font-medium tracking-wide animate-pulse-gentle">
-                Connect • Play • Discover
+              <p class="text-white/80 text-lg font-medium tracking-wide">
+                Play. Bond. Thrive
               </p>
             </div>
           </div>
@@ -99,29 +100,6 @@ import { CommonModule } from '@angular/common';
       animation-timing-function: ease-in-out;
     }
 
-    .text-gradient {
-      background: linear-gradient(45deg, #FF4757, #FF6B9D, #4ECDC4);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      -moz-background-clip: text;
-      -moz-text-fill-color: transparent;
-      color: transparent;
-      /* Add drop-shadow filter instead of text-shadow for Chrome compatibility */
-      filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.5)) drop-shadow(0 0 40px rgba(255, 107, 157, 0.3)) brightness(1.1) contrast(1.2);
-      -webkit-filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.5)) drop-shadow(0 0 40px rgba(255, 107, 157, 0.3)) brightness(1.1) contrast(1.2);
-    }
-
-    .text-stroke {
-      -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
-      text-stroke: 1px rgba(0, 0, 0, 0.3);
-      /* Fallback for Firefox */
-      text-shadow: 
-        -1px -1px 0 rgba(0, 0, 0, 0.3),
-        1px -1px 0 rgba(0, 0, 0, 0.3),
-        -1px 1px 0 rgba(0, 0, 0, 0.3),
-        1px 1px 0 rgba(0, 0, 0, 0.3);
-    }
 
     /* Enhanced glow effects */
     .relative .absolute {
