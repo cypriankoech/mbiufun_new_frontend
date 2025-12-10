@@ -1,35 +1,4 @@
 <div class="min-h-screen bg-gray-50 pb-20">
-  <!-- Header Section -->
-  <div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-md mx-auto px-4 py-3">
-      <div class="flex items-center justify-between">
-        <!-- Left Arrow Icon -->
-        <button
-          (click)="goBack()"
-          class="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Go back"
-        >
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <!-- App Title -->
-        <h1 class="text-xl font-bold text-[#0b4d57]">Mbiufun</h1>
-
-        <!-- Search Icon -->
-        <button
-          class="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Search"
-        >
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Loading State -->
   <div *ngIf="loading" class="flex flex-col items-center justify-center py-16">
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#70AEB9] mb-4"></div>
