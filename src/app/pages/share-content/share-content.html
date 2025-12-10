@@ -1,0 +1,122 @@
+<div class="min-h-screen bg-gray-50 pb-20">
+  <!-- Header Section -->
+  <div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-md mx-auto px-4 py-3">
+      <div class="flex items-center justify-between">
+        <!-- Title -->
+        <h1 class="text-xl font-bold text-[#0b4d57]">Share Content</h1>
+
+        <!-- Close Button -->
+        <button
+          (click)="goBack()"
+          class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Close"
+        >
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-md mx-auto px-4 py-6 space-y-6" *ngIf="sharedContent">
+
+    <!-- Upload Success Banner -->
+    <div class="bg-green-50 border border-green-200 rounded-xl overflow-hidden">
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <!-- Success Icon -->
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-green-900">Content uploaded successfully!</h3>
+              <p class="text-sm text-green-700">Go to Kumbu to see your uploaded content</p>
+            </div>
+          </div>
+
+          <!-- Expand/Collapse Arrow -->
+          <button
+            (click)="toggleBanner()"
+            class="p-1 hover:bg-green-100 rounded-full transition-colors"
+            [attr.aria-expanded]="bannerExpanded"
+          >
+            <svg
+              class="w-5 h-5 text-green-600 transition-transform"
+              [class.rotate-180]="bannerExpanded"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- View in Kumbu Button -->
+        <div class="mt-4" *ngIf="bannerExpanded">
+          <button
+            (click)="goToKumbu()"
+            class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            View in Kumbu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Uploaded Content Preview -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="aspect-square bg-gray-100">
+        <img
+          [src]="sharedContent.imageUrl"
+          [alt]="sharedContent.activity.name"
+          class="w-full h-full object-cover"
+        >
+      </div>
+    </div>
+
+    <!-- Content Description Block -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <p class="text-gray-900 font-medium text-center">
+        {{ getMatchDescription() }}
+      </p>
+    </div>
+
+    <!-- Share Action Buttons -->
+    <div class="flex justify-center gap-6">
+      <!-- Twitter/X Share Button -->
+      <button
+        (click)="shareToTwitter()"
+        class="w-16 h-16 bg-black hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+        aria-label="Share on X/Twitter"
+      >
+        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      </button>
+
+      <!-- Download Button -->
+      <button
+        (click)="downloadImage()"
+        class="w-16 h-16 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+        aria-label="Download image"
+      >
+        <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <app-bottom-menu></app-bottom-menu>
+</div>

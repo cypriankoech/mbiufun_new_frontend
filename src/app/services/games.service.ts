@@ -25,6 +25,11 @@ export class GamesService {
     return this.apiService.get('game/', { game_mode: 'non_competitive' });
   }
 
+  // Get a specific game by ID
+  getGameById(gameId: number): Observable<Game> {
+    return this.apiService.get(`game/${gameId}/`);
+  }
+
   // Get user's game history
   getUserGameHistory(userId?: number): Observable<UserGameHistory[]> {
     const params = userId ? { user_id: userId } : {};

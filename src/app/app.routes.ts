@@ -32,6 +32,9 @@ export const routes: Routes = [
     children: [
       { path: '', component: LandingComponent }, // Landing is now the home/dashboard
       { path: 'activities', component: ActivitiesComponent }, // Activities/Feed page
+      { path: 'create-match/:gameId', loadComponent: () => import('./pages/create-match/create-match.component').then(m => m.CreateMatchComponent) },
+      { path: 'activity-submission/:activityId', loadComponent: () => import('./pages/activity-submission/activity-submission').then(m => m.ActivitySubmissionComponent) },
+      { path: 'share-content', loadComponent: () => import('./pages/share-content/share-content').then(m => m.ShareContentComponent) },
       { path: 'daily-dare', loadComponent: () => import('./pages/daily-dare/daily-dare.component').then(m => m.DailyDareComponent) },
       { path: 'daily-dare/history', loadComponent: () => import('./pages/daily-dare/daily-dare-history.component').then(m => m.DailyDareHistoryComponent) },
       { path: 'daily-dare/:id', loadComponent: () => import('./pages/daily-dare/daily-dare-detail.component').then(m => m.DailyDareDetailComponent) },

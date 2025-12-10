@@ -593,6 +593,31 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   }
 
   goToCreateMatch(gameId: number, gameMode?: GameMode) {
+    console.log('goToCreateMatch called with:', { gameId, gameMode });
+
+    // For non-competitive games (vibes), navigate to activity submission
+    if (gameMode === 'non_competitive') {
+      console.log('Navigating to activity submission with ID:', gameId);
+      console.log('Available displayedVibesGames:', this.displayedVibesGames);
+
+      // Find the game object from the displayed vibes
+      const game = this.displayedVibesGames.find(g => g.id === gameId);
+      console.log('Found game object:', game);
+
+      // Store the activity data in sessionStorage for the submission page
+      if (game) {
+        sessionStorage.setItem('selectedActivity', JSON.stringify(game));
+        console.log('Stored activity in sessionStorage:', game);
+      } else {
+        console.warn('Game not found in displayedVibesGames');
+        sessionStorage.removeItem('selectedActivity');
+      }
+
+      this.router.navigate(['/app/activity-submission', gameId]);
+      return;
+    }
+
+    // For competitive games, navigate to create match
     const queryParams = gameMode ? { game_mode: gameMode } : {};
 
     this.router.navigate(
