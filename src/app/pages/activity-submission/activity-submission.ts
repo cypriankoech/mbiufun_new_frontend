@@ -65,6 +65,9 @@ export class ActivitySubmissionComponent implements OnInit {
   // Caption
   activityCaption = '';
 
+  // Location
+  activityLocation = '';
+
   constructor() {
     this.participantSearchForm = this.fb.group({
       searchQuery: ['']
@@ -309,7 +312,8 @@ export class ActivitySubmissionComponent implements OnInit {
       activity: this.currentActivity,
       participants: this.participants,
       photos: this.uploadedPhotos,
-      caption: this.activityCaption
+      caption: this.activityCaption,
+      location: this.activityLocation
     });
 
     // Prepare shared content data
@@ -318,7 +322,8 @@ export class ActivitySubmissionComponent implements OnInit {
       matchId: Math.floor(Math.random() * 9000) + 1000, // Mock match ID
       imageUrl: this.uploadedPhotos[0]?.preview || '', // Use first uploaded photo
       participants: this.participants.map(p => p.username),
-      caption: this.activityCaption
+      caption: this.activityCaption,
+      location: this.activityLocation
     };
 
     // Store shared content for the share screen
