@@ -199,7 +199,7 @@ interface VisibilitySelection {
           </div>
 
           <!-- No Results -->
-          <div *ngIf="!isSearchingIndividuals && individualSearchControl.value?.trim().length >= 2 && individualSearchResults.length === 0" class="text-center py-4 text-gray-500 text-sm">
+          <div *ngIf="!isSearchingIndividuals && individualSearchControl.value && individualSearchControl.value.trim().length >= 2 && individualSearchResults.length === 0" class="text-center py-4 text-gray-500 text-sm">
             No users found for "{{ individualSearchControl.value }}"
           </div>
 
@@ -422,6 +422,14 @@ export class VisibilitySelectorComponent implements OnInit {
   private selectAllBubblesOnLoad(): void {
     // IMPORTANT: All bubbles selected by default!
     this.selectedBubbleIds = new Set(this.bubbles.map(b => b.id));
+  }
+
+  private getHeaders() {
+    const token = localStorage.getItem('mbiu-token');
+    return {
+      'Content-Type': 'application/json',
+      'mbiu-token': token || ''
+    };
   }
 
   private searchIndividuals(query: string) {
