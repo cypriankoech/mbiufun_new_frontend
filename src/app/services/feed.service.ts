@@ -21,6 +21,14 @@ interface BackendPost {
     icon?: string;
   };
   post_img?: string;
+  image_urls?: string[];
+  location?: {
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    google_place_id: string;
+  };
   created_at: string;
   likes_count: number;
   comments_count: number;
@@ -196,7 +204,11 @@ export class FeedService {
       },
       caption: backendPost.text,
       hobby: backendPost.hobby,
-      image_urls: backendPost.post_img ? [backendPost.post_img] : [],
+      // Prioritize image_urls array, fallback to post_img for backward compatibility
+      image_urls: backendPost.image_urls && backendPost.image_urls.length > 0 
+        ? backendPost.image_urls 
+        : (backendPost.post_img ? [backendPost.post_img] : []),
+      location: backendPost.location,
       created_at: backendPost.created_at,
       likes_count: backendPost.likes_count,
       comments_count: backendPost.comments_count,
