@@ -135,16 +135,16 @@ interface UploadedPhoto {
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="p-4 border-b border-gray-100">
             <h3 class="text-lg font-semibold text-gray-900">Photos ({{ uploadedPhotos.length }}/{{ maxPhotos }}) <span class="text-sm font-normal text-gray-500">optional</span></h3>
-          </div>
+        </div>
 
           <div class="p-4 space-y-4">
             <!-- Photo Upload Button -->
             <div *ngIf="uploadedPhotos.length < maxPhotos" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#70AEB9] transition-colors">
-              <input
-                #fileInput
-                type="file"
-                accept="image/*"
-                (change)="onImageSelect($event)"
+            <input
+              #fileInput
+              type="file"
+              accept="image/*"
+              (change)="onImageSelect($event)"
                 class="hidden"
                 id="photo-upload"
                 aria-label="Upload photo"
@@ -196,21 +196,21 @@ interface UploadedPhoto {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     </button>
-                    <button
+            <button
                       (click)="removePhoto(photo)"
                       class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                       aria-label="Delete photo"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+              </svg>
+            </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
         <!-- Action Buttons -->
         <div class="flex gap-2 sm:gap-3 pt-2">
@@ -280,7 +280,7 @@ export class PostComposerComponent implements OnInit {
     this.checkActivePostCount();
     this.loadAISuggestions();
     this.setupLocationSearch();
-
+    
     // Get user initial from auth service
     const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if (user?.first_name) {
@@ -440,9 +440,9 @@ export class PostComposerComponent implements OnInit {
         return;
       }
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
       const preview = e.target?.result as string;
       const photo: UploadedPhoto = {
         id: Date.now().toString(),
@@ -451,9 +451,9 @@ export class PostComposerComponent implements OnInit {
         caption: ''
       };
       this.uploadedPhotos.push(photo);
-    };
+      };
     reader.readAsDataURL(processedFile);
-  }
+    }
 
   private async compressImage(file: File, maxSize: number): Promise<File> {
     return new Promise((resolve, reject) => {

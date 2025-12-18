@@ -454,7 +454,7 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     console.log('Navigating to activity detail for:', game);
 
     // Store the activity data in sessionStorage for the detail page
-    sessionStorage.setItem('selectedActivity', JSON.stringify(game));
+        sessionStorage.setItem('selectedActivity', JSON.stringify(game));
 
     // Navigate to activity detail page
     this.router.navigate(['/app/activity-detail', game.id]);

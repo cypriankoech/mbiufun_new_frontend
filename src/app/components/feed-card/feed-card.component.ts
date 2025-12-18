@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedPost } from '@app/services/feed.service';
+import { AuthService } from '@app/services/auth.service';
 
 @Component({
   selector: 'app-feed-card',
@@ -43,8 +44,8 @@ import { FeedPost } from '@app/services/feed.service';
                 {{ post.author.first_name }} {{ post.author.last_name }}
               </button>
 
-              <!-- Clean Menu Button -->
-              <div class="relative" *ngIf="!post.is_friend_post">
+              <!-- Clean Menu Button - Only show for own posts -->
+              <div class="relative" *ngIf="isOwnPost()">
                 <button
                   (click)="toggleMenu()"
                   class="w-8 h-8 rounded-full hover:bg-gray-50 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
@@ -258,6 +259,7 @@ import { FeedPost } from '@app/services/feed.service';
 export class FeedCardComponent {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly authService = inject(AuthService);
 
   @Input({ required: true }) post!: FeedPost;
   @Output() comment = new EventEmitter<number>();
@@ -330,6 +332,11 @@ export class FeedCardComponent {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
     console.warn('Failed to load image:', this.post.image_urls?.[0] || 'unknown image');
+  }
+
+  isOwnPost(): boolean {
+    const currentUser = this.authService.getUserData();
+    return currentUser ? this.post.author.id === currentUser.id : false;
   }
 
   // Image carousel methods
