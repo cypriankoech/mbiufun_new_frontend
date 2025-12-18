@@ -158,13 +158,12 @@
       *ngIf="posts.length > 0"
       class="space-y-6 sm:space-y-8"
       role="feed"
-      aria-busy="loading"
+      [attr.aria-busy]="loading"
     >
       <div
         *ngFor="let post of posts; trackBy: trackByPostId; let i = index"
-        class="transform transition-all duration-500 hover:scale-[1.01]"
-        [style.animation-delay]="i * 50 + 'ms'"
-        style="animation: fadeSlideIn 0.5s ease-out forwards; opacity: 0;"
+        class="animate-fadeSlideIn transform transition-all duration-300 hover:scale-[1.01]"
+        [style.animation-delay]="(i * 50) + 'ms'"
       >
         <app-feed-card
           [post]="post"
