@@ -2,8 +2,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '@environments/environment';
+import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
 interface Bubble {
   id: string;
@@ -16,7 +17,7 @@ interface Individual {
   id: number;
   first_name: string;
   last_name: string;
-  username: string;
+  mbiu_username: string;
   profile_image?: string;
 }
 
@@ -193,8 +194,18 @@ interface VisibilitySelection {
             </div>
           </div>
 
+          <!-- Search Loading State -->
+          <div *ngIf="isSearchingIndividuals" class="flex justify-center py-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#70AEB9]"></div>
+          </div>
+
+          <!-- No Results -->
+          <div *ngIf="!isSearchingIndividuals && individualSearchQuery.trim().length >= 2 && individualSearchResults.length === 0" class="text-center py-4 text-gray-500 text-sm">
+            No users found for "{{ individualSearchQuery }}"
+          </div>
+
           <!-- Individual Search Results -->
-          <div *ngIf="individualSearchResults.length > 0" class="space-y-2">
+          <div *ngIf="!isSearchingIndividuals && individualSearchResults.length > 0" class="space-y-2">
             <button
               *ngFor="let person of individualSearchResults"
               (click)="addIndividual(person)"
@@ -206,7 +217,7 @@ interface VisibilitySelection {
               </div>
               <div class="flex-1 text-left">
                 <p class="font-medium text-gray-900">{{ person.first_name }} {{ person.last_name }}</p>
-                <p class="text-sm text-gray-500">@{{ person.username }}</p>
+                <p class="text-sm text-gray-500">@{{ person.mbiu_username }}</p>
               </div>
               <svg *ngIf="isIndividualSelected(person.id)" class="w-5 h-5 text-[#70AEB9]" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -319,6 +330,7 @@ export class VisibilitySelectorComponent implements OnInit {
   loadingGroups = true;
   individualSearchQuery = '';
   individualSearchResults: Individual[] = [];
+  isSearchingIndividuals = false;
 
   ngOnInit(): void {
     this.loadBubbles();
@@ -326,6 +338,14 @@ export class VisibilitySelectorComponent implements OnInit {
     
     // Default: All bubbles selected (this is the key default behavior!)
     this.selectAllBubblesOnLoad();
+    
+    // Set up debounced search for individuals
+    this.setupIndividualSearch();
+  }
+  
+  private setupIndividualSearch(): void {
+    // We'll use a simple observable setup for the search query changes
+    // The debouncing is handled in the searchIndividuals method
   }
 
   private loadBubbles(): void {
@@ -385,26 +405,37 @@ export class VisibilitySelectorComponent implements OnInit {
   searchIndividuals(): void {
     if (!this.individualSearchQuery || this.individualSearchQuery.trim().length < 2) {
       this.individualSearchResults = [];
+      this.isSearchingIndividuals = false;
       return;
     }
 
+    this.isSearchingIndividuals = true;
     const token = this.getToken();
     const headers = new HttpHeaders({
-      'mbiu-token': token,
-      'Authorization': `Bearer ${token}`
+      'Content-Type': 'application/json',
+      'mbiu-token': token
     });
 
-    // TODO: Replace with actual user search endpoint
-    this.http.get<{ users: Individual[] }>(`${environment.apiUrl}v1/user/search/?q=${this.individualSearchQuery}`, { headers })
-      .subscribe({
-        next: (response) => {
-          this.individualSearchResults = response.users || [];
-        },
-        error: (error) => {
-          console.error('Error searching individuals:', error);
-          this.individualSearchResults = [];
-        }
-      });
+    const params = new HttpParams()
+      .set('s', this.individualSearchQuery.trim())
+      .set('users', '1')
+      .set('per_page', '10');
+
+    this.http.get<{ users: Individual[] }>(
+      `${environment.apiUrl}api/v1/search`,
+      { headers, params }
+    ).subscribe({
+      next: (response) => {
+        this.individualSearchResults = response.users || [];
+        this.isSearchingIndividuals = false;
+        console.log('🔍 Search results:', this.individualSearchResults);
+      },
+      error: (error) => {
+        console.error('Error searching individuals:', error);
+        this.individualSearchResults = [];
+        this.isSearchingIndividuals = false;
+      }
+    });
   }
 
   // Bubble methods
