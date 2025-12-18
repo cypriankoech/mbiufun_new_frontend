@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedPost } from '@app/services/feed.service';
-import { AuthService } from '@app/services/auth.service';
+import { AuthenticationService } from '@app/services/authentication.service';
 
 @Component({
   selector: 'app-feed-card',
@@ -259,7 +259,7 @@ import { AuthService } from '@app/services/auth.service';
 export class FeedCardComponent {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(AuthenticationService);
 
   @Input({ required: true }) post!: FeedPost;
   @Output() comment = new EventEmitter<number>();
@@ -335,7 +335,7 @@ export class FeedCardComponent {
   }
 
   isOwnPost(): boolean {
-    const currentUser = this.authService.getUserData();
+    const currentUser = this.authService.currentUserValue;
     return currentUser ? this.post.author.id === currentUser.id : false;
   }
 
