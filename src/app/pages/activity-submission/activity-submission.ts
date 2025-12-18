@@ -249,11 +249,16 @@ export class ActivitySubmissionComponent implements OnInit {
       .set('users', '1')
       .set('per_page', '10');
 
+    console.log('🔍 Activity search - Query:', query, 'Headers:', headers);
+
     return this.http.get<{ users: UserSearchResult[] }>(
       `${environment.apiUrl.replace(/\/$/, '')}/api/v1/search`,
       { headers, params }
     ).pipe(
-      switchMap(response => of(response.users || []))
+      switchMap(response => {
+        console.log('🔍 Activity search - Response:', response);
+        return of(response.users || []);
+      })
     );
   }
 
@@ -392,10 +397,10 @@ export class ActivitySubmissionComponent implements OnInit {
   }
 
   private getHeaders() {
-    const token = localStorage.getItem('token') || localStorage.getItem('dev_am_token');
+    const token = localStorage.getItem('mbiu-token');
     return {
-      'mbiu-token': token || '',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'mbiu-token': token || ''
     };
   }
 
