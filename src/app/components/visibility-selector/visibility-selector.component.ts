@@ -1,0 +1,521 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '@environments/environment';
+
+interface Bubble {
+  id: number;
+  name: string;
+  img_url?: string;
+}
+
+interface Individual {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username: string;
+  profile_image?: string;
+}
+
+interface VisibilityGroup {
+  id: number;
+  name: string;
+  member_count: number;
+  members: Array<{
+    member_type: 'user' | 'bubble';
+    user?: number;
+    bubble_id?: number;
+    user_details?: Individual;
+  }>;
+}
+
+interface VisibilitySelection {
+  is_public: boolean;
+  bubbles: number[];
+  individuals: number[];
+  groups: number[];
+}
+
+@Component({
+  selector: 'app-visibility-selector',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="h-screen w-screen flex flex-col bg-white overflow-hidden">
+      <!-- Header -->
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4]">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-white">👁️ Who can see this?</h2>
+            <p class="text-white/90 text-sm mt-1">Choose your audience</p>
+          </div>
+          <button
+            (click)="close()"
+            class="p-2 hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Close"
+          >
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Recipient Count Banner -->
+      <div class="p-4 bg-[#70AEB9]/10 border-b border-[#70AEB9]/20 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="font-semibold text-gray-900">
+              {{ isPublic ? 'Visible to Everyone' : 'Visible to ' + recipientCount + ' people' }}
+            </span>
+          </div>
+          <button
+            (click)="resetToDefault()"
+            class="text-sm text-[#70AEB9] hover:text-[#5a9aa3] font-medium"
+          >
+            Reset to Default
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto">
+        <!-- Section 1: Bubbles (Default Layer) -->
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#70AEB9]" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                </svg>
+                Bubbles
+              </h3>
+              <p class="text-sm text-gray-600">Select social contexts</p>
+            </div>
+            <button
+              (click)="toggleAllBubbles()"
+              class="text-sm px-3 py-1.5 rounded-lg border border-[#70AEB9] text-[#70AEB9] hover:bg-[#70AEB9]/10 transition-colors"
+            >
+              {{ areAllBubblesSelected() ? 'Deselect All' : 'Select All' }}
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="loadingBubbles" class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#70AEB9]"></div>
+          </div>
+
+          <!-- Bubbles Grid -->
+          <div *ngIf="!loadingBubbles && bubbles.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <button
+              *ngFor="let bubble of bubbles"
+              (click)="toggleBubble(bubble.id)"
+              [class.ring-2]="isBubbleSelected(bubble.id)"
+              [class.ring-[#70AEB9]]="isBubbleSelected(bubble.id)"
+              [class.bg-[#70AEB9]/10]="isBubbleSelected(bubble.id)"
+              class="relative p-3 border border-gray-200 rounded-xl hover:border-[#70AEB9] hover:bg-gray-50 transition-all group"
+            >
+              <!-- Checkmark -->
+              <div *ngIf="isBubbleSelected(bubble.id)" class="absolute top-2 right-2 w-5 h-5 bg-[#70AEB9] rounded-full flex items-center justify-center">
+                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <!-- Bubble Icon -->
+              <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center">
+                <img *ngIf="bubble.img_url" [src]="bubble.img_url" [alt]="bubble.name" class="w-8 h-8 object-contain" />
+                <svg *ngIf="!bubble.img_url" class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                </svg>
+              </div>
+              
+              <p class="text-xs font-medium text-gray-900 text-center truncate">{{ bubble.name }}</p>
+            </button>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loadingBubbles && bubbles.length === 0" class="text-center py-8">
+            <p class="text-gray-500">No bubbles available</p>
+          </div>
+        </div>
+
+        <!-- Section 2: Individuals (Direct Selection) -->
+        <div class="p-6 border-b border-gray-200">
+          <div class="mb-4">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#70AEB9]" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+              </svg>
+              Specific People
+            </h3>
+            <p class="text-sm text-gray-600">Add individuals directly</p>
+          </div>
+
+          <!-- Search Individuals -->
+          <div class="relative mb-4">
+            <input
+              type="text"
+              [(ngModel)]="individualSearchQuery"
+              (input)="searchIndividuals()"
+              placeholder="Search by name..."
+              class="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9] focus:border-transparent"
+            />
+            <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          <!-- Selected Individuals -->
+          <div *ngIf="selectedIndividuals.length > 0" class="mb-4">
+            <p class="text-xs font-medium text-gray-600 mb-2">Selected ({{ selectedIndividuals.length }})</p>
+            <div class="flex flex-wrap gap-2">
+              <div
+                *ngFor="let person of selectedIndividuals"
+                class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#70AEB9]/10 border border-[#70AEB9]/30 rounded-full"
+              >
+                <span class="text-sm font-medium text-gray-900">{{ person.first_name }} {{ person.last_name }}</span>
+                <button
+                  (click)="removeIndividual(person.id)"
+                  class="p-0.5 hover:bg-red-100 rounded-full transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Individual Search Results -->
+          <div *ngIf="individualSearchResults.length > 0" class="space-y-2">
+            <button
+              *ngFor="let person of individualSearchResults"
+              (click)="addIndividual(person)"
+              [disabled]="isIndividualSelected(person.id)"
+              class="w-full p-3 flex items-center gap-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center text-white font-semibold">
+                {{ person.first_name.charAt(0) }}{{ person.last_name.charAt(0) }}
+              </div>
+              <div class="flex-1 text-left">
+                <p class="font-medium text-gray-900">{{ person.first_name }} {{ person.last_name }}</p>
+                <p class="text-sm text-gray-500">@{{ person.username }}</p>
+              </div>
+              <svg *ngIf="isIndividualSelected(person.id)" class="w-5 h-5 text-[#70AEB9]" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 3: Groups (Shortcuts) -->
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#70AEB9]" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                </svg>
+                Saved Groups
+              </h3>
+              <p class="text-sm text-gray-600">Quick selection shortcuts</p>
+            </div>
+            <button
+              (click)="openCreateGroup()"
+              class="text-sm px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white hover:shadow-lg transition-all"
+            >
+              + New Group
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="loadingGroups" class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#70AEB9]"></div>
+          </div>
+
+          <!-- Groups List -->
+          <div *ngIf="!loadingGroups && groups.length > 0" class="space-y-3">
+            <button
+              *ngFor="let group of groups"
+              (click)="toggleGroup(group.id)"
+              [class.ring-2]="isGroupSelected(group.id)"
+              [class.ring-[#70AEB9]]="isGroupSelected(group.id)"
+              [class.bg-[#70AEB9]/10]="isGroupSelected(group.id)"
+              class="w-full p-4 flex items-center justify-between border border-gray-200 rounded-xl hover:border-[#70AEB9] hover:bg-gray-50 transition-all group"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                  </svg>
+                </div>
+                <div class="text-left">
+                  <p class="font-semibold text-gray-900">{{ group.name }}</p>
+                  <p class="text-sm text-gray-500">{{ group.member_count }} members</p>
+                </div>
+              </div>
+              
+              <div *ngIf="isGroupSelected(group.id)" class="w-6 h-6 bg-[#70AEB9] rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </button>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loadingGroups && groups.length === 0" class="text-center py-8">
+            <svg class="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <p class="text-gray-500 mb-2">No saved groups yet</p>
+            <p class="text-sm text-gray-400">Create groups to quickly share with the same people</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 sm:p-6 border-t border-gray-200 flex gap-3 flex-shrink-0 bg-white">
+        <button
+          (click)="close()"
+          class="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="confirm()"
+          class="flex-1 px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+        >
+          Confirm ({{ recipientCount }} {{ recipientCount === 1 ? 'person' : 'people' }})
+        </button>
+      </div>
+    </div>
+  `,
+  styles: []
+})
+export class VisibilitySelectorComponent implements OnInit {
+  private readonly http = inject(HttpClient);
+  private readonly dialogRef = inject(MatDialogRef<VisibilitySelectorComponent>);
+
+  // Data
+  bubbles: Bubble[] = [];
+  individuals: Individual[] = [];
+  groups: VisibilityGroup[] = [];
+
+  // Selection state
+  selectedBubbleIds: Set<number> = new Set();
+  selectedIndividuals: Individual[] = [];
+  selectedGroupIds: Set<number> = new Set();
+  
+  // UI state
+  loadingBubbles = true;
+  loadingGroups = true;
+  individualSearchQuery = '';
+  individualSearchResults: Individual[] = [];
+
+  ngOnInit(): void {
+    this.loadBubbles();
+    this.loadGroups();
+    
+    // Default: All bubbles selected (this is the key default behavior!)
+    this.selectAllBubblesOnLoad();
+  }
+
+  private loadBubbles(): void {
+    const token = this.getToken();
+    const headers = new HttpHeaders({
+      'mbiu-token': token,
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<{ games: Bubble[] }>(`${environment.apiUrl}v1/games/games/my-vibes/`, { headers })
+      .subscribe({
+        next: (response) => {
+          this.bubbles = response.games || [];
+          this.selectAllBubblesOnLoad();
+          this.loadingBubbles = false;
+        },
+        error: (error) => {
+          console.error('Error loading bubbles:', error);
+          this.loadingBubbles = false;
+        }
+      });
+  }
+
+  private loadGroups(): void {
+    const token = this.getToken();
+    const headers = new HttpHeaders({
+      'mbiu-token': token,
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<{ groups: VisibilityGroup[] }>(`${environment.apiUrl}v1/posts/visibility_groups/`, { headers })
+      .subscribe({
+        next: (response) => {
+          this.groups = response.groups || [];
+          this.loadingGroups = false;
+        },
+        error: (error) => {
+          console.error('Error loading groups:', error);
+          this.loadingGroups = false;
+        }
+      });
+  }
+
+  private selectAllBubblesOnLoad(): void {
+    // IMPORTANT: All bubbles selected by default!
+    this.selectedBubbleIds = new Set(this.bubbles.map(b => b.id));
+  }
+
+  searchIndividuals(): void {
+    if (!this.individualSearchQuery || this.individualSearchQuery.trim().length < 2) {
+      this.individualSearchResults = [];
+      return;
+    }
+
+    const token = this.getToken();
+    const headers = new HttpHeaders({
+      'mbiu-token': token,
+      'Authorization': `Bearer ${token}`
+    });
+
+    // TODO: Replace with actual user search endpoint
+    this.http.get<{ users: Individual[] }>(`${environment.apiUrl}v1/user/search/?q=${this.individualSearchQuery}`, { headers })
+      .subscribe({
+        next: (response) => {
+          this.individualSearchResults = response.users || [];
+        },
+        error: (error) => {
+          console.error('Error searching individuals:', error);
+          this.individualSearchResults = [];
+        }
+      });
+  }
+
+  // Bubble methods
+  toggleBubble(id: number): void {
+    if (this.selectedBubbleIds.has(id)) {
+      this.selectedBubbleIds.delete(id);
+    } else {
+      this.selectedBubbleIds.add(id);
+    }
+  }
+
+  isBubbleSelected(id: number): boolean {
+    return this.selectedBubbleIds.has(id);
+  }
+
+  areAllBubblesSelected(): boolean {
+    return this.selectedBubbleIds.size === this.bubbles.length;
+  }
+
+  toggleAllBubbles(): void {
+    if (this.areAllBubblesSelected()) {
+      this.selectedBubbleIds.clear();
+    } else {
+      this.selectedBubbleIds = new Set(this.bubbles.map(b => b.id));
+    }
+  }
+
+  // Individual methods
+  addIndividual(person: Individual): void {
+    if (!this.isIndividualSelected(person.id)) {
+      this.selectedIndividuals.push(person);
+    }
+  }
+
+  removeIndividual(id: number): void {
+    this.selectedIndividuals = this.selectedIndividuals.filter(p => p.id !== id);
+  }
+
+  isIndividualSelected(id: number): boolean {
+    return this.selectedIndividuals.some(p => p.id === id);
+  }
+
+  // Group methods
+  toggleGroup(id: number): void {
+    if (this.selectedGroupIds.has(id)) {
+      this.selectedGroupIds.delete(id);
+    } else {
+      this.selectedGroupIds.add(id);
+    }
+  }
+
+  isGroupSelected(id: number): boolean {
+    return this.selectedGroupIds.has(id);
+  }
+
+  // Recipient count calculation
+  get recipientCount(): number {
+    if (this.isPublic) {
+      return 0; // Everyone
+    }
+    
+    // This is an approximation - actual count would need backend calculation
+    let count = 0;
+    
+    // Count from bubbles (rough estimate: assume 10 users per bubble)
+    count += this.selectedBubbleIds.size * 10;
+    
+    // Count individuals
+    count += this.selectedIndividuals.length;
+    
+    // Count from groups
+    this.groups.forEach(group => {
+      if (this.selectedGroupIds.has(group.id)) {
+        count += group.member_count;
+      }
+    });
+    
+    return count;
+  }
+
+  get isPublic(): boolean {
+    // If all bubbles are selected and nothing else, it's public
+    return this.areAllBubblesSelected() && 
+           this.selectedIndividuals.length === 0 && 
+           this.selectedGroupIds.size === 0;
+  }
+
+  resetToDefault(): void {
+    this.selectAllBubblesOnLoad();
+    this.selectedIndividuals = [];
+    this.selectedGroupIds.clear();
+  }
+
+  openCreateGroup(): void {
+    // TODO: Open group creation dialog
+    console.log('Create group clicked');
+  }
+
+  confirm(): void {
+    const selection: VisibilitySelection = {
+      is_public: this.isPublic,
+      bubbles: Array.from(this.selectedBubbleIds),
+      individuals: this.selectedIndividuals.map(p => p.id),
+      groups: Array.from(this.selectedGroupIds)
+    };
+    
+    this.dialogRef.close(selection);
+  }
+
+  close(): void {
+    this.dialogRef.close(null);
+  }
+
+  private getToken(): string {
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+      const userData = JSON.parse(user);
+      return userData.token?.access || userData.token || '';
+    }
+    return '';
+  }
+}
+

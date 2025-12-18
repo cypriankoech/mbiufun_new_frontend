@@ -98,6 +98,12 @@ export interface CreatePostPayload {
     longitude: number;
     google_place_id: string;
   };
+  visibility?: {
+    is_public: boolean;
+    bubbles: number[];
+    individuals: number[];
+    groups: number[];
+  };
 }
 
 export interface AICaptionSuggestion {
@@ -267,6 +273,10 @@ export class FeedService {
       if (payload.location) {
         formData.append('location', JSON.stringify(payload.location));
       }
+      // Send visibility as JSON string if present
+      if (payload.visibility) {
+        formData.append('visibility', JSON.stringify(payload.visibility));
+      }
       // Send multiple images with indexed names
       payload.images.forEach((image, index) => {
         formData.append(`image_${index}`, image);
@@ -309,7 +319,8 @@ export class FeedService {
       const jsonData = {
         caption: payload.caption,
         ...(payload.hobby_id !== null && payload.hobby_id !== undefined && { hobby_id: payload.hobby_id }),
-        ...(payload.location && { location: payload.location })
+        ...(payload.location && { location: payload.location }),
+        ...(payload.visibility && { visibility: payload.visibility })
       };
 
       console.log('Sending JSON data:', jsonData);

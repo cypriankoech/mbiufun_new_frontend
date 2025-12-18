@@ -6,6 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
 import { MapLocationPickerComponent } from '@app/components/map-location-picker/map-location-picker.component';
+import { VisibilitySelectorComponent } from '@app/components/visibility-selector/visibility-selector.component';
 import { environment } from '@environments/environment';
 import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
@@ -103,6 +104,28 @@ interface UploadedPhoto {
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- Visibility Selector -->
+        <div>
+          <button
+            (click)="openVisibilitySelector()"
+            type="button"
+            class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#70AEB9] hover:bg-[#70AEB9]/5 transition-all text-left flex items-center gap-3 group"
+          >
+            <svg class="w-6 h-6 text-gray-400 group-hover:text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            <div class="flex-1">
+              <span class="text-gray-600 group-hover:text-[#70AEB9] font-medium">
+                {{ selectedVisibility.is_public ? '👁️ Visible to Everyone' : '👁️ Custom Audience' }}
+              </span>
+              <p *ngIf="!selectedVisibility.is_public" class="text-xs text-gray-500 mt-0.5">
+                {{ getVisibilityDescription() }}
+              </p>
+            </div>
+          </button>
         </div>
 
         <!-- AI Caption Suggestions -->
@@ -271,6 +294,14 @@ export class PostComposerComponent implements OnInit {
   locationSuggestions: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }[] = [];
   selectedLocation: { name: string, address: string, latitude: number, longitude: number, google_place_id: string } | null = null;
 
+  // Visibility properties
+  selectedVisibility: { is_public: boolean; bubbles: number[]; individuals: number[]; groups: number[] } = {
+    is_public: true,
+    bubbles: [],
+    individuals: [],
+    groups: []
+  };
+
   ngOnInit(): void {
     this.checkActivePostCount();
     this.loadAISuggestions();
@@ -368,6 +399,40 @@ export class PostComposerComponent implements OnInit {
         console.log('📍 Location selected from map:', result);
       }
     });
+  }
+
+  openVisibilitySelector(): void {
+    const dialogRef = this.dialog.open(VisibilitySelectorComponent, {
+      width: '100vw',
+      maxWidth: '100vw',
+      height: '100vh',
+      maxHeight: '100vh',
+      panelClass: ['full-screen-dialog'],
+      hasBackdrop: true,
+      disableClose: false,
+      autoFocus: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.selectedVisibility = result;
+        console.log('👁️ Visibility selected:', result);
+      }
+    });
+  }
+
+  getVisibilityDescription(): string {
+    const parts = [];
+    if (this.selectedVisibility.bubbles.length > 0) {
+      parts.push(`${this.selectedVisibility.bubbles.length} bubble${this.selectedVisibility.bubbles.length > 1 ? 's' : ''}`);
+    }
+    if (this.selectedVisibility.individuals.length > 0) {
+      parts.push(`${this.selectedVisibility.individuals.length} person${this.selectedVisibility.individuals.length > 1 ? 's' : ''}`);
+    }
+    if (this.selectedVisibility.groups.length > 0) {
+      parts.push(`${this.selectedVisibility.groups.length} group${this.selectedVisibility.groups.length > 1 ? 's' : ''}`);
+    }
+    return parts.join(', ') || 'Custom selection';
   }
 
   selectLocation(location: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }): void {
@@ -563,11 +628,13 @@ export class PostComposerComponent implements OnInit {
     const postPayload = {
       caption: this.caption,
       images: this.uploadedPhotos.length > 0 ? this.uploadedPhotos.map(p => p.file) : undefined,
-      location: this.selectedLocation || undefined
+      location: this.selectedLocation || undefined,
+      visibility: this.selectedVisibility
     };
     
     console.log('📍 Creating post with payload:', postPayload);
     console.log('📍 Selected location:', this.selectedLocation);
+    console.log('👁️ Selected visibility:', this.selectedVisibility);
     
     this.feedService.createPost(postPayload).subscribe({
       next: () => {
