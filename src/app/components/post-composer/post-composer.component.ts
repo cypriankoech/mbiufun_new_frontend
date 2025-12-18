@@ -448,10 +448,10 @@ export class PostComposerComponent implements OnInit {
   }
 
   private getHeaders() {
-    const token = localStorage.getItem('token') || localStorage.getItem('dev_am_token');
+    const token = localStorage.getItem('mbiu-token');
     return {
-      'mbiu-token': token || '',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'mbiu-token': token || ''
     };
   }
 
