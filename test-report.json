@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-09-24T23:03:02.031Z",
+  "summary": {
+    "total": 4,
+    "success": 1,
+    "failed": 0,
+    "errors": 3,
+    "warnings": 0
+  },
+  "results": [
+    {
+      "test": "App Load",
+      "status": "SUCCESS",
+      "message": "Angular app loaded with content",
+      "timestamp": "2:02:51 AM"
+    },
+    {
+      "test": "Tab Switching",
+      "status": "ERROR",
+      "message": "Tab switching test failed: this.page.waitForTimeout is not a function",
+      "timestamp": "2:02:54 AM"
+    },
+    {
+      "test": "Register Form",
+      "status": "ERROR",
+      "message": "Form test failed: Waiting for selector `form, input[formControlName=\"firstName\"], input[name=\"firstName\"]` failed",
+      "timestamp": "2:03:00 AM"
+    },
+    {
+      "test": "Form Validation",
+      "status": "ERROR",
+      "message": "Validation test failed: SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Sign up\")' is not a valid selector.",
+      "timestamp": "2:03:02 AM"
+    }
+  ]
+}
