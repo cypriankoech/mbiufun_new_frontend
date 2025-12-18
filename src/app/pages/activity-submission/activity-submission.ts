@@ -249,16 +249,11 @@ export class ActivitySubmissionComponent implements OnInit {
       .set('users', '1')
       .set('per_page', '10');
 
-    console.log('🔍 Activity search - Query:', query, 'Headers:', headers);
-
     return this.http.get<{ users: UserSearchResult[] }>(
       `${environment.apiUrl.replace(/\/$/, '')}/api/v1/search`,
       { headers, params }
     ).pipe(
-      switchMap(response => {
-        console.log('🔍 Activity search - Response:', response);
-        return of(response.users || []);
-      })
+      switchMap(response => of(response.users || []))
     );
   }
 
