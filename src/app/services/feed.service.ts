@@ -272,9 +272,10 @@ export class FeedService {
         formData.append(`image_${index}`, image);
       });
 
-      console.log('Sending FormData with image');
+      console.log('📦 Sending FormData with image');
+      console.log('📍 Location being sent:', payload.location);
       for (const [key, value] of (formData as any).entries()) {
-        console.log(`${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
+        console.log(`  ${key}:`, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
       }
 
       const headers = new HttpHeaders({
@@ -287,8 +288,14 @@ export class FeedService {
         formData,
         { headers }
       ).pipe(
+        tap(backendPost => {
+          console.log('✅ Backend response:', backendPost);
+          console.log('📍 Location in response:', backendPost.location);
+        }),
         map(backendPost => this.mapBackendToFrontend(backendPost)),
-        tap(() => {
+        tap(mappedPost => {
+          console.log('🗺️ Mapped post:', mappedPost);
+          console.log('📍 Location in mapped post:', mappedPost.location);
           console.log('Post created successfully');
           this.notifyNewPosts();
         }),
