@@ -263,6 +263,10 @@ export class FeedService {
       if (payload.hobby_id !== null && payload.hobby_id !== undefined) {
         formData.append('hobby_id', payload.hobby_id.toString());
       }
+      // Send location as JSON string if present
+      if (payload.location) {
+        formData.append('location', JSON.stringify(payload.location));
+      }
       // Send multiple images with indexed names
       payload.images.forEach((image, index) => {
         formData.append(`image_${index}`, image);
@@ -297,7 +301,8 @@ export class FeedService {
       // No image, send as JSON
       const jsonData = {
         caption: payload.caption,
-        ...(payload.hobby_id !== null && payload.hobby_id !== undefined && { hobby_id: payload.hobby_id })
+        ...(payload.hobby_id !== null && payload.hobby_id !== undefined && { hobby_id: payload.hobby_id }),
+        ...(payload.location && { location: payload.location })
       };
 
       console.log('Sending JSON data:', jsonData);
