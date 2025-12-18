@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
+import { MapLocationPickerComponent } from '@app/components/map-location-picker/map-location-picker.component';
 import { environment } from '@environments/environment';
 import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
@@ -64,50 +66,42 @@ interface UploadedPhoto {
 
         <!-- Location Input -->
         <div>
-          <label for="location" class="sr-only">Location</label>
-          <div class="relative">
-            <form>
-              <div class="flex gap-2">
-                <input
-                  [formControl]="locationSearchControl"
-                  type="text"
-                  placeholder="Add location..."
-                  class="flex-1 px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 focus:border-[#70AEB9] text-sm"
-                  autocomplete="off"
-                >
-                <div class="absolute right-12 top-3 text-gray-400">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                </div>
-                <button
-                  *ngIf="selectedLocation"
-                  (click)="clearLocation()"
-                  class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                  type="button"
-                  aria-label="Clear location"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+          <button
+            *ngIf="!selectedLocation"
+            (click)="openMapPicker()"
+            type="button"
+            class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#70AEB9] hover:bg-[#70AEB9]/5 transition-all text-left flex items-center gap-3 group"
+          >
+            <svg class="w-6 h-6 text-gray-400 group-hover:text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="text-gray-600 group-hover:text-[#70AEB9]">📍 Add location from map</span>
+          </button>
 
-              <!-- Location Suggestions Dropdown -->
-              <div *ngIf="locationSuggestions.length > 0" class="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                <div *ngFor="let location of locationSuggestions" class="border-b border-gray-100 last:border-b-0">
-                  <button
-                    (click)="selectLocation(location)"
-                    type="button"
-                    class="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <div class="font-medium text-gray-900 text-sm">{{ location.name }}</div>
-                    <div class="text-xs text-gray-500">{{ location.address }}</div>
-                  </button>
+          <!-- Selected Location Display -->
+          <div *ngIf="selectedLocation" class="border border-[#70AEB9] rounded-lg p-3 bg-[#70AEB9]/5">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1 min-w-0">
+                <svg class="w-5 h-5 text-[#70AEB9] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-gray-900">{{ selectedLocation.name }}</p>
+                  <p class="text-sm text-gray-600 mt-0.5">{{ selectedLocation.address }}</p>
                 </div>
               </div>
-            </form>
+              <button
+                (click)="clearLocation()"
+                type="button"
+                class="p-1 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-600 transition-colors flex-shrink-0"
+                aria-label="Clear location"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -257,6 +251,7 @@ export class PostComposerComponent implements OnInit {
   private readonly feedService = inject(FeedService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly http = inject(HttpClient);
+  private readonly dialog = inject(MatDialog);
 
   @Output() postCreated = new EventEmitter<void>();
 
@@ -348,11 +343,29 @@ export class PostComposerComponent implements OnInit {
       .set('q', query);
 
     return this.http.get<{ data: any[] }>(
-      `${environment.apiUrl.replace(/\/$/, '')}/api/games/location/search/`,
+      `${environment.apiUrl.replace(/\/$/, '')}/api/v1/games/location/search/`,
       { headers, params }
     ).pipe(
       switchMap(response => of(response.data || []))
     );
+  }
+
+  openMapPicker(): void {
+    const dialogRef = this.dialog.open(MapLocationPickerComponent, {
+      maxWidth: '100vw',
+      width: '100vw',
+      height: '100vh',
+      maxHeight: '100vh',
+      panelClass: 'full-screen-dialog',
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.selectedLocation = result;
+        console.log('📍 Location selected from map:', result);
+      }
+    });
   }
 
   selectLocation(location: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }): void {
