@@ -545,11 +545,16 @@ export class PostComposerComponent implements OnInit {
 
     // Submit post to backend
 
-    this.feedService.createPost({
+    const postPayload = {
       caption: this.caption,
       images: this.uploadedPhotos.length > 0 ? this.uploadedPhotos.map(p => p.file) : undefined,
       location: this.selectedLocation || undefined
-    }).subscribe({
+    };
+    
+    console.log('📍 Creating post with payload:', postPayload);
+    console.log('📍 Selected location:', this.selectedLocation);
+    
+    this.feedService.createPost(postPayload).subscribe({
       next: () => {
         this.snackBar.open('🎉 Post shared successfully!', 'Close', {
           duration: 3000,

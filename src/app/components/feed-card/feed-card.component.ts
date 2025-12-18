@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -256,7 +256,7 @@ import { AuthenticationService } from '@app/services/authentication.service';
   `,
   styles: []
 })
-export class FeedCardComponent {
+export class FeedCardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly authService = inject(AuthenticationService);
@@ -272,6 +272,15 @@ export class FeedCardComponent {
   isDragging = false;
   startX = 0;
   currentX = 0;
+
+  ngOnInit(): void {
+    console.log('📍 Feed card post data:', {
+      id: this.post.id,
+      caption: this.post.caption.substring(0, 30) + '...',
+      hasLocation: !!this.post.location,
+      location: this.post.location
+    });
+  }
 
   toggleMenu(): void {
     this.showMenu = !this.showMenu;
