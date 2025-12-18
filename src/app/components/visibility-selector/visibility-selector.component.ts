@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '@environments/environment';
-import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, of, Subject } from 'rxjs';
 
 interface Bubble {
   id: string;
@@ -43,7 +43,7 @@ interface VisibilitySelection {
 @Component({
   selector: 'app-visibility-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="h-screen w-screen flex flex-col bg-white overflow-hidden">
       <!-- Header -->
@@ -163,8 +163,7 @@ interface VisibilitySelection {
           <div class="relative mb-4">
             <input
               type="text"
-              [(ngModel)]="individualSearchQuery"
-              (input)="searchIndividuals()"
+              [formControl]="individualSearchControl"
               placeholder="Search by name..."
               class="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9] focus:border-transparent"
             />
@@ -200,8 +199,8 @@ interface VisibilitySelection {
           </div>
 
           <!-- No Results -->
-          <div *ngIf="!isSearchingIndividuals && individualSearchQuery.trim().length >= 2 && individualSearchResults.length === 0" class="text-center py-4 text-gray-500 text-sm">
-            No users found for "{{ individualSearchQuery }}"
+          <div *ngIf="!isSearchingIndividuals && individualSearchControl.value?.trim().length >= 2 && individualSearchResults.length === 0" class="text-center py-4 text-gray-500 text-sm">
+            No users found for "{{ individualSearchControl.value }}"
           </div>
 
           <!-- Individual Search Results -->
@@ -328,7 +327,7 @@ export class VisibilitySelectorComponent implements OnInit {
   // UI state
   loadingBubbles = true;
   loadingGroups = true;
-  individualSearchQuery = '';
+  individualSearchControl = new FormControl('');
   individualSearchResults: Individual[] = [];
   isSearchingIndividuals = false;
 
@@ -344,8 +343,31 @@ export class VisibilitySelectorComponent implements OnInit {
   }
   
   private setupIndividualSearch(): void {
-    // We'll use a simple observable setup for the search query changes
-    // The debouncing is handled in the searchIndividuals method
+    // Set up debounced search for individuals (same as create-group-dialog)
+    this.individualSearchControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (query && query.trim().length >= 2) {
+          this.isSearchingIndividuals = true;
+          return this.searchIndividuals(query.trim());
+        } else {
+          this.individualSearchResults = [];
+          this.isSearchingIndividuals = false;
+          return of([]);
+        }
+      })
+    ).subscribe({
+      next: (results: Individual[]) => {
+        this.individualSearchResults = results;
+        this.isSearchingIndividuals = false;
+      },
+      error: (error) => {
+        console.error('Individual search error:', error);
+        this.isSearchingIndividuals = false;
+        this.individualSearchResults = [];
+      }
+    });
   }
 
   private loadBubbles(): void {
@@ -402,40 +424,19 @@ export class VisibilitySelectorComponent implements OnInit {
     this.selectedBubbleIds = new Set(this.bubbles.map(b => b.id));
   }
 
-  searchIndividuals(): void {
-    if (!this.individualSearchQuery || this.individualSearchQuery.trim().length < 2) {
-      this.individualSearchResults = [];
-      this.isSearchingIndividuals = false;
-      return;
-    }
-
-    this.isSearchingIndividuals = true;
-    const token = this.getToken();
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'mbiu-token': token
-    });
-
+  private searchIndividuals(query: string) {
+    const headers = this.getHeaders();
     const params = new HttpParams()
-      .set('s', this.individualSearchQuery.trim())
+      .set('s', query)
       .set('users', '1')
       .set('per_page', '10');
 
-    this.http.get<{ users: Individual[] }>(
-      `${environment.apiUrl}api/v1/search`,
+    return this.http.get<{ users: Individual[] }>(
+      `${environment.apiUrl.replace(/\/$/, '')}/api/v1/search`,
       { headers, params }
-    ).subscribe({
-      next: (response) => {
-        this.individualSearchResults = response.users || [];
-        this.isSearchingIndividuals = false;
-        console.log('🔍 Search results:', this.individualSearchResults);
-      },
-      error: (error) => {
-        console.error('Error searching individuals:', error);
-        this.individualSearchResults = [];
-        this.isSearchingIndividuals = false;
-      }
-    });
+    ).pipe(
+      switchMap(response => of(response.users || []))
+    );
   }
 
   // Bubble methods
