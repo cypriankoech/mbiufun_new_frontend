@@ -34,6 +34,7 @@ export const routes: Routes = [
       { path: 'activities', component: ActivitiesComponent }, // Activities/Feed page
       { path: 'create-match/:gameId', loadComponent: () => import('./pages/create-match/create-match.component').then(m => m.CreateMatchComponent) },
       { path: 'activity-submission/:activityId', loadComponent: () => import('./pages/activity-submission/activity-submission').then(m => m.ActivitySubmissionComponent) },
+      { path: 'activity-detail/:activityId', loadComponent: () => import('./pages/activity-detail/activity-detail.component').then(m => m.ActivityDetailComponent) },
       { path: 'share-content', loadComponent: () => import('./pages/share-content/share-content').then(m => m.ShareContentComponent) },
       { path: 'daily-dare', loadComponent: () => import('./pages/daily-dare/daily-dare.component').then(m => m.DailyDareComponent) },
       { path: 'daily-dare/history', loadComponent: () => import('./pages/daily-dare/daily-dare-history.component').then(m => m.DailyDareHistoryComponent) },

@@ -12,6 +12,7 @@ interface SharedContent {
   imageUrl: string;
   participants: string[];
   caption: string;
+  location?: string | { name: string, address: string, latitude: number, longitude: number, google_place_id: string };
 }
 
 @Component({
@@ -116,5 +117,15 @@ export class ShareContentComponent implements OnInit {
 
     const { matchId, activity } = this.sharedContent;
     return `Match #${matchId} - ${activity.name}`;
+  }
+
+  getLocationDisplay(): string {
+    if (!this.sharedContent?.location) return '';
+
+    if (typeof this.sharedContent.location === 'string') {
+      return this.sharedContent.location;
+    } else {
+      return this.sharedContent.location.name;
+    }
   }
 }

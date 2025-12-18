@@ -1,13 +1,23 @@
 import { Component, EventEmitter, Output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
+import { environment } from '@environments/environment';
+import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
+
+interface UploadedPhoto {
+  id: string;
+  file: File;
+  preview: string;
+  caption: string;
+}
 
 @Component({
   selector: 'app-post-composer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 mb-4">
       <!-- Composer Header -->
@@ -52,6 +62,55 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
           </div>
         </div>
 
+        <!-- Location Input -->
+        <div>
+          <label for="location" class="sr-only">Location</label>
+          <div class="relative">
+            <form>
+              <div class="flex gap-2">
+                <input
+                  [formControl]="locationSearchControl"
+                  type="text"
+                  placeholder="Add location..."
+                  class="flex-1 px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 focus:border-[#70AEB9] text-sm"
+                  autocomplete="off"
+                >
+                <div class="absolute right-12 top-3 text-gray-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+                <button
+                  *ngIf="selectedLocation"
+                  (click)="clearLocation()"
+                  class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                  type="button"
+                  aria-label="Clear location"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Location Suggestions Dropdown -->
+              <div *ngIf="locationSuggestions.length > 0" class="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <div *ngFor="let location of locationSuggestions" class="border-b border-gray-100 last:border-b-0">
+                  <button
+                    (click)="selectLocation(location)"
+                    type="button"
+                    class="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <div class="font-medium text-gray-900 text-sm">{{ location.name }}</div>
+                    <div class="text-xs text-gray-500">{{ location.address }}</div>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <!-- AI Caption Suggestions -->
         <div *ngIf="showAISuggestions && aiSuggestions.length > 0" class="space-y-2">
           <div class="flex items-center gap-2 text-sm text-gray-600">
@@ -72,52 +131,94 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
           </div>
         </div>
 
-        <!-- Image Preview (if image selected) -->
-        <div *ngIf="imagePreview" class="relative">
-          <img [src]="imagePreview" alt="Preview" class="w-full h-48 object-cover rounded-xl" />
-          <button
-            (click)="removeImage()"
-            class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50"
-            type="button"
-            aria-label="Remove image"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Action Buttons (WhatsApp style - image button longer, send button is icon) -->
-        <div class="flex gap-2 sm:gap-3 pt-2">
-          <!-- Image Upload Button (longer) -->
-          <div class="relative flex-1">
-            <input
-              #fileInput
-              type="file"
-              accept="image/*"
-              (change)="onImageSelect($event)"
-              class="sr-only"
-              id="image-upload"
-              aria-label="Upload image"
-            />
-            <button
-              (click)="fileInput.click()"
-              class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 hover:border-[#70AEB9] text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
-              type="button"
-              title="Choose image"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span>{{ selectedImage ? 'Change image' : 'Choose image' }}</span>
-            </button>
+        <!-- Photo Upload Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900">Photos ({{ uploadedPhotos.length }}/{{ maxPhotos }}) <span class="text-sm font-normal text-gray-500">optional</span></h3>
           </div>
 
-          <!-- Send/Post Button (icon only, like WhatsApp) -->
+          <div class="p-4 space-y-4">
+            <!-- Photo Upload Button -->
+            <div *ngIf="uploadedPhotos.length < maxPhotos" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#70AEB9] transition-colors">
+              <input
+                #fileInput
+                type="file"
+                accept="image/*"
+                (change)="onImageSelect($event)"
+                class="hidden"
+                id="photo-upload"
+                aria-label="Upload photo"
+              />
+              <label
+                for="photo-upload"
+                class="cursor-pointer flex flex-col items-center"
+              >
+                <svg class="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="text-gray-600 font-medium">Add Photo</p>
+                <p class="text-gray-400 text-sm">PNG, JPG up to 5MB</p>
+              </label>
+            </div>
+
+            <!-- Uploaded Photos -->
+            <div *ngIf="uploadedPhotos.length > 0" class="space-y-3">
+              <div
+                *ngFor="let photo of uploadedPhotos; let i = index"
+                class="border border-gray-200 rounded-lg p-3 bg-gray-50"
+              >
+                <div class="flex items-center gap-3">
+                  <!-- Photo Preview -->
+                  <div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      [src]="photo.preview"
+                      [alt]="'Image ' + (i + 1)"
+                      class="w-full h-full object-cover cursor-pointer"
+                      (click)="viewPhoto(photo)"
+                    >
+                  </div>
+
+                  <!-- Photo Info -->
+                  <div class="flex-1">
+                    <p class="font-medium text-gray-900">Image {{ i + 1 }}</p>
+                    <p class="text-sm text-gray-500">{{ photo.file.name }}</p>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex gap-2">
+                    <button
+                      (click)="viewPhoto(photo)"
+                      class="p-2 text-gray-600 hover:text-[#70AEB9] hover:bg-[#70AEB9]/10 rounded-full transition-colors"
+                      aria-label="View photo"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                    <button
+                      (click)="removePhoto(photo)"
+                      class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      aria-label="Delete photo"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-2 sm:gap-3 pt-2">
+          <!-- Send/Post Button -->
           <button
             (click)="submitPost()"
             [disabled]="!canSubmit || isSubmitting"
-            class="w-12 h-12 rounded-full bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] hover:from-[#5a9aa3] hover:to-[#3db5ac] text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 flex items-center justify-center"
+            class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] hover:from-[#5a9aa3] hover:to-[#3db5ac] text-white font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 flex items-center justify-center gap-2"
             [attr.aria-busy]="isSubmitting"
             [attr.aria-label]="isSubmitting ? 'Posting...' : 'Send post'"
           >
@@ -128,6 +229,7 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
+            <span>{{ isSubmitting ? 'Posting...' : 'Share Post' }}</span>
           </button>
 
           <!-- Cancel Button -->
@@ -154,13 +256,14 @@ import { FeedService, AICaptionSuggestion } from '@app/services/feed.service';
 export class PostComposerComponent implements OnInit {
   private readonly feedService = inject(FeedService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly http = inject(HttpClient);
 
   @Output() postCreated = new EventEmitter<void>();
 
   isExpanded = false;
   caption = '';
-  selectedImage: File | null = null;
-  imagePreview: string | null = null;
+  uploadedPhotos: UploadedPhoto[] = [];
+  maxPhotos = 3;
   isSubmitting = false;
   showAISuggestions = false;
   aiSuggestions: AICaptionSuggestion[] = [];
@@ -168,10 +271,16 @@ export class PostComposerComponent implements OnInit {
   activePostCount = 0;
   postLimit = 5;
 
+  // Location properties
+  locationSearchControl = new FormControl('');
+  locationSuggestions: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }[] = [];
+  selectedLocation: { name: string, address: string, latitude: number, longitude: number, google_place_id: string } | null = null;
+
   ngOnInit(): void {
     this.checkActivePostCount();
     this.loadAISuggestions();
-    
+    this.setupLocationSearch();
+
     // Get user initial from auth service
     const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if (user?.first_name) {
@@ -210,35 +319,203 @@ export class PostComposerComponent implements OnInit {
     this.showAISuggestions = false;
   }
 
+  setupLocationSearch(): void {
+    // Setup debounced location search
+    this.locationSearchControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (!query || query.trim().length < 3) {
+          this.locationSuggestions = [];
+          return of([]);
+        }
+        return this.searchLocations(query.trim());
+      })
+    ).subscribe({
+      next: (suggestions) => {
+        this.locationSuggestions = suggestions;
+      },
+      error: (error) => {
+        console.error('Location search error:', error);
+        this.locationSuggestions = [];
+      }
+    });
+  }
+
+  private searchLocations(query: string) {
+    const headers = this.getHeaders();
+    const params = new HttpParams()
+      .set('q', query);
+
+    return this.http.get<{ data: any[] }>(
+      `${environment.apiUrl.replace(/\/$/, '')}/api/games/location/search/`,
+      { headers, params }
+    ).pipe(
+      switchMap(response => of(response.data || []))
+    );
+  }
+
+  selectLocation(location: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }): void {
+    this.selectedLocation = location;
+    this.locationSearchControl.setValue(location.name);
+    this.locationSuggestions = [];
+  }
+
+  clearLocation(): void {
+    this.selectedLocation = null;
+    this.locationSearchControl.setValue('');
+    this.locationSuggestions = [];
+  }
+
+  private getHeaders() {
+    const token = localStorage.getItem('token') || localStorage.getItem('dev_am_token');
+    return {
+      'mbiu-token': token || '',
+      'Content-Type': 'application/json'
+    };
+  }
+
   onImageSelect(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        this.snackBar.open('Image must be less than 5MB', 'Close', {
+      this.addPhoto(file);
+
+      // Reset the input so the same file can be selected again
+      input.value = '';
+    }
+  }
+
+  private async addPhoto(file: File): Promise<void> {
+    if (this.uploadedPhotos.length >= this.maxPhotos) {
+      this.snackBar.open(`Maximum ${this.maxPhotos} photos allowed`, 'Close', {
+        duration: 2000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.snackBar.open('Please select an image file', 'Close', {
+        duration: 2000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    // Validate and compress file size
+    const maxSize = 3 * 1024 * 1024; // 3MB (reasonable for compressed images)
+    let processedFile = file;
+
+    // Show compression loading for large files
+    const needsCompression = file.size > maxSize;
+    if (needsCompression) {
+      this.snackBar.open('Compressing image...', 'Close', {
+        duration: 1000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top'
+      });
+    }
+
+    if (file.size > maxSize) {
+      try {
+        processedFile = await this.compressImage(file, maxSize);
+        if (processedFile.size > maxSize) {
+          this.snackBar.open('File size must be less than 3MB after compression', 'Close', {
+            duration: 3000,
+            horizontalPosition: 'center',
+            verticalPosition: 'top'
+          });
+          return;
+        }
+      } catch (error) {
+        this.snackBar.open('Failed to compress image. Please try a smaller file.', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
           verticalPosition: 'top'
         });
         return;
       }
-
-      this.selectedImage = file;
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.imagePreview = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
     }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const preview = e.target?.result as string;
+      const photo: UploadedPhoto = {
+        id: Date.now().toString(),
+        file: processedFile,
+        preview: preview,
+        caption: ''
+      };
+      this.uploadedPhotos.push(photo);
+    };
+    reader.readAsDataURL(processedFile);
   }
 
-  removeImage(): void {
-    this.selectedImage = null;
-    this.imagePreview = null;
+  private async compressImage(file: File, maxSize: number): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      img.onload = () => {
+        // Calculate new dimensions while maintaining aspect ratio
+        let { width, height } = img;
+
+        // Reduce quality/size progressively until under limit
+        let quality = 0.9;
+        let compressedFile: File;
+
+        const compress = () => {
+          // Resize large images
+          if (width > 1920 || height > 1920) {
+            const ratio = Math.min(1920 / width, 1920 / height);
+            width *= ratio;
+            height *= ratio;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              compressedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now()
+              });
+
+              if (compressedFile.size <= maxSize || quality <= 0.1) {
+                resolve(compressedFile);
+              } else {
+                quality -= 0.1;
+                compress();
+              }
+            } else {
+              reject(new Error('Compression failed'));
+            }
+          }, file.type, quality);
+        };
+
+        compress();
+      };
+
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  removePhoto(photo: UploadedPhoto): void {
+    this.uploadedPhotos = this.uploadedPhotos.filter(p => p.id !== photo.id);
+  }
+
+  viewPhoto(photo: UploadedPhoto): void {
+    // TODO: Implement full-size photo viewer
+    console.log('View photo:', photo);
   }
 
   checkActivePostCount(): void {
@@ -270,7 +547,8 @@ export class PostComposerComponent implements OnInit {
 
     this.feedService.createPost({
       caption: this.caption,
-      image: this.selectedImage || undefined
+      images: this.uploadedPhotos.length > 0 ? this.uploadedPhotos.map(p => p.file) : undefined,
+      location: this.selectedLocation || undefined
     }).subscribe({
       next: () => {
         this.snackBar.open('🎉 Post shared successfully!', 'Close', {
@@ -321,7 +599,7 @@ export class PostComposerComponent implements OnInit {
   }
 
   cancelComposer(): void {
-    if (this.caption || this.selectedImage) {
+    if (this.caption || this.uploadedPhotos.length > 0) {
       const confirmCancel = confirm('Discard your post?');
       if (!confirmCancel) return;
     }
@@ -331,10 +609,10 @@ export class PostComposerComponent implements OnInit {
   resetComposer(): void {
     this.isExpanded = false;
     this.caption = '';
-    this.selectedImage = null;
-    this.imagePreview = null;
+    this.uploadedPhotos = [];
     this.isSubmitting = false;
     this.showAISuggestions = false;
+    this.clearLocation();
   }
 
   get canSubmit(): boolean {

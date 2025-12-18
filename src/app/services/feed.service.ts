@@ -50,7 +50,14 @@ export interface FeedPost {
     name: string;
     icon?: string;
   };
-  image_url?: string;
+  image_urls?: string[];
+  location?: {
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    google_place_id: string;
+  };
   created_at: string;
   likes_count: number;
   comments_count: number;
@@ -75,7 +82,14 @@ export interface UnifiedFeedResponse {
 export interface CreatePostPayload {
   caption: string;
   hobby_id?: number;
-  image?: File;
+  images?: File[]; // TODO: Backend currently only supports single image
+  location?: {
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    google_place_id: string;
+  };
 }
 
 export interface AICaptionSuggestion {
@@ -182,7 +196,7 @@ export class FeedService {
       },
       caption: backendPost.text,
       hobby: backendPost.hobby,
-      image_url: backendPost.post_img,
+      image_urls: backendPost.post_img ? [backendPost.post_img] : [],
       created_at: backendPost.created_at,
       likes_count: backendPost.likes_count,
       comments_count: backendPost.comments_count,
@@ -230,14 +244,17 @@ export class FeedService {
     console.log('Making POST request to:', requestUrl);
     console.log('Token present:', !!token);
 
-    // If there's an image, use FormData
-    if (payload.image) {
+    // If there are images, use FormData
+    if (payload.images && payload.images.length > 0) {
       const formData = new FormData();
       formData.append('caption', payload.caption);
       if (payload.hobby_id !== null && payload.hobby_id !== undefined) {
         formData.append('hobby_id', payload.hobby_id.toString());
       }
-      formData.append('image', payload.image);
+      // Send multiple images with indexed names
+      payload.images.forEach((image, index) => {
+        formData.append(`image_${index}`, image);
+      });
 
       console.log('Sending FormData with image');
       for (const [key, value] of (formData as any).entries()) {

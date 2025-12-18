@@ -10,114 +10,153 @@ import { FeedPost } from '@app/services/feed.service';
   imports: [CommonModule],
   template: `
     <article
-      class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300"
+      class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200"
       [attr.aria-label]="'Post by ' + post.author.first_name + ' ' + post.author.last_name"
     >
       <!-- Card Header -->
-      <div class="p-3 sm:p-4">
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-3 flex-1">
-            <!-- Avatar -->
-            <button
-              (click)="viewProfile()"
-              class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center text-white font-semibold text-base sm:text-lg hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
-              [attr.aria-label]="'View ' + post.author.first_name + ' profile'"
-            >
-              <img
-                *ngIf="post.author.profile_image"
-                [src]="post.author.profile_image"
-                [alt]="post.author.first_name + ' ' + post.author.last_name"
-                class="w-full h-full rounded-full object-cover"
-              />
-              <span *ngIf="!post.author.profile_image">
-                {{ post.author.first_name.charAt(0) }}{{ post.author.last_name.charAt(0) }}
-              </span>
-            </button>
+      <div class="p-4">
+        <div class="flex items-start gap-3">
+          <!-- Avatar -->
+          <button
+            (click)="viewProfile()"
+            class="flex-shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center text-white font-semibold text-lg hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+            [attr.aria-label]="'View ' + post.author.first_name + ' profile'"
+          >
+            <img
+              *ngIf="post.author.profile_image"
+              [src]="post.author.profile_image"
+              [alt]="post.author.first_name + ' ' + post.author.last_name"
+              class="w-full h-full rounded-full object-cover"
+            />
+            <span *ngIf="!post.author.profile_image">
+              {{ post.author.first_name.charAt(0) }}{{ post.author.last_name.charAt(0) }}
+            </span>
+          </button>
 
-            <!-- Author Info -->
-            <div class="flex-1 min-w-0">
+          <!-- Author & Meta Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
               <button
                 (click)="viewProfile()"
-                class="font-semibold text-sm sm:text-base text-gray-900 hover:text-[#70AEB9] transition-colors duration-200 text-left focus:outline-none focus:underline"
+                class="font-semibold text-gray-900 hover:text-[#70AEB9] transition-colors duration-200 focus:outline-none focus:underline"
               >
                 {{ post.author.first_name }} {{ post.author.last_name }}
               </button>
-              <div class="flex items-center gap-2 flex-wrap mt-1">
-                <time
-                  [dateTime]="post.created_at"
-                  class="text-sm text-gray-500"
+
+              <!-- Clean Menu Button -->
+              <div class="relative" *ngIf="!post.is_friend_post">
+                <button
+                  (click)="toggleMenu()"
+                  class="w-8 h-8 rounded-full hover:bg-gray-50 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  [attr.aria-expanded]="showMenu"
+                  aria-label="Post options"
                 >
-                  {{ formatTimestamp(post.created_at) }}
-                </time>
-                <!-- Hobby Chip -->
-                <span
-                  *ngIf="post.hobby"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#70AEB9]/10 text-[#0b4d57] text-xs font-medium border border-[#70AEB9]/20"
-                >
-                  <span *ngIf="post.hobby.icon">{{ post.hobby.icon }}</span>
-                  {{ post.hobby.name }}
-                </span>
-                <!-- Friend Post Pill -->
-                <span
-                  *ngIf="post.is_friend_post"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 text-xs font-medium border border-pink-200"
-                >
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01" />
                   </svg>
-                  Friend Post
-                </span>
+                </button>
+                <!-- Simplified Dropdown -->
+                <div
+                  *ngIf="showMenu"
+                  class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10"
+                  role="menu"
+                >
+                  <button
+                    (click)="deletePost()"
+                    class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2"
+                    role="menuitem"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Overflow Menu -->
-          <div class="relative" *ngIf="!post.is_friend_post">
-            <button
-              (click)="toggleMenu()"
-              class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
-              [attr.aria-expanded]="showMenu"
-              aria-label="Post options"
-            >
-              <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-              </svg>
-            </button>
-            <!-- Dropdown Menu -->
-            <div
-              *ngIf="showMenu"
-              class="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10"
-              role="menu"
-            >
-              <button
-                (click)="deletePost()"
-                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2"
-                role="menuitem"
+            <!-- Meta Info Row -->
+            <div class="flex items-center gap-2 mt-1">
+              <time
+                [dateTime]="post.created_at"
+                class="text-sm text-gray-500"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                {{ formatTimestamp(post.created_at) }}
+              </time>
+              <span class="text-gray-300">•</span>
+              <!-- Activity Badge -->
+              <span
+                *ngIf="post.hobby"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium"
+              >
+                {{ post.hobby.name }}
+              </span>
+              <!-- Friend Post Indicator -->
+              <span
+                *ngIf="post.is_friend_post"
+                class="inline-flex items-center gap-1 text-xs text-pink-600"
+              >
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
                 </svg>
-                Delete Post
-              </button>
+                Friend
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- Caption -->
-        <div class="mt-2 sm:mt-3">
-          <p class="text-sm sm:text-base text-gray-800 whitespace-pre-wrap break-words leading-relaxed">{{ post.caption }}</p>
+        <!-- Post Content -->
+        <div class="mt-3">
+          <!-- Caption -->
+          <p class="text-gray-900 leading-relaxed whitespace-pre-wrap break-words">{{ post.caption }}</p>
+
+          <!-- Location -->
+          <div *ngIf="post.location" class="mt-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="text-sm text-gray-600">{{ post.location.name }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Post Image -->
-      <div *ngIf="post.image_url" class="w-full bg-gray-100">
-        <img
-          [src]="post.image_url"
-          [alt]="'Image from post by ' + post.author.first_name"
-          class="w-full h-auto max-h-96 sm:max-h-[32rem] object-contain bg-gray-50"
-          loading="lazy"
-          (error)="onImageError($event)"
-        />
+      <!-- Post Images -->
+      <div *ngIf="post.image_urls && post.image_urls.length > 0" class="border-t border-gray-100">
+        <div *ngIf="post.image_urls.length === 1" class="p-0">
+          <img
+            [src]="post.image_urls[0]"
+            [alt]="'Image from post by ' + post.author.first_name"
+            class="w-full h-auto max-h-96 object-cover"
+            loading="lazy"
+            (error)="onImageError($event)"
+          />
+        </div>
+        <div *ngIf="post.image_urls.length === 2" class="p-0">
+          <div class="grid grid-cols-2 gap-0.5">
+            <img
+              *ngFor="let imageUrl of post.image_urls"
+              [src]="imageUrl"
+              [alt]="'Image from post by ' + post.author.first_name"
+              class="w-full h-48 sm:h-64 object-cover"
+              loading="lazy"
+              (error)="onImageError($event)"
+            />
+          </div>
+        </div>
+        <div *ngIf="post.image_urls.length >= 3" class="p-0">
+          <div class="grid grid-cols-2 gap-0.5">
+            <img
+              *ngFor="let imageUrl of post.image_urls; let i = index"
+              [src]="imageUrl"
+              [alt]="'Image from post by ' + post.author.first_name"
+              [class]="i === 0 ? 'row-span-2 h-64 sm:h-80' : 'h-32 sm:h-40'"
+              class="w-full object-cover"
+              loading="lazy"
+              (error)="onImageError($event)"
+            />
+          </div>
+        </div>
       </div>
 
       <!-- Event Details (if event post) -->
@@ -148,30 +187,31 @@ import { FeedPost } from '@app/services/feed.service';
         </div>
       </div>
 
-      <!-- Action Bar -->
-      <div class="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-100">
-        <div class="flex items-center justify-between">
+      <!-- Clean Action Bar -->
+      <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+        <div class="flex items-center gap-4">
           <!-- Comment Button -->
           <button
             (click)="openComments()"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+            class="flex items-center gap-2 text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 rounded-lg px-2 py-1"
             aria-label="View comments"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <span class="text-sm font-medium text-gray-700">{{ post.comments_count }}</span>
+            <span class="text-sm font-medium">{{ post.comments_count || 0 }}</span>
           </button>
 
           <!-- Share Button -->
           <button
             (click)="sharePost()"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
+            class="flex items-center gap-2 text-gray-600 hover:text-[#70AEB9] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50 rounded-lg px-2 py-1 ml-auto"
             aria-label="Share post"
           >
-            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
+            <span class="text-sm font-medium">Share</span>
           </button>
         </div>
       </div>
@@ -247,7 +287,7 @@ export class FeedCardComponent {
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
-    console.warn('Failed to load image:', this.post.image_url);
+    console.warn('Failed to load image:', this.post.image_urls?.[0] || 'unknown image');
   }
 }
 

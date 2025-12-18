@@ -22,154 +22,13 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
     <div class="min-h-full pb-20 sm:pb-24">
       <!-- Page Header -->
       <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57] mb-1">Vibes & Activities</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold text-[#0b4d57] mb-1">Activities & Vibes</h1>
         <p class="text-gray-600 text-sm sm:text-base">Discover activities and connect with your community</p>
       </div>
 
-      <!-- Tab Navigation -->
-      <div class="mb-4 sm:mb-6">
-        <div class="relative flex bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-1 sm:p-1.5 shadow-inner border border-gray-200/50">
-          <!-- Sliding indicator -->
-          <div 
-            class="absolute top-1 sm:top-1.5 bottom-1 sm:bottom-1.5 transition-all duration-300 ease-out rounded-xl bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] shadow-lg"
-            [class.left-1]="activeTab === 'posts'"
-            [class.sm:left-1.5]="activeTab === 'posts'"
-            [class.right-1]="activeTab === 'vibes'"
-            [class.sm:right-1.5]="activeTab === 'vibes'"
-            [style.width]="'calc(50% - 0.5rem)'"
-            [style.width.sm]="'calc(50% - 0.75rem)'"
-          ></div>
-          
-          <button
-            (click)="activeTab = 'posts'"
-            [class.text-white]="activeTab === 'posts'"
-            [class.text-gray-600]="activeTab !== 'posts'"
-            class="relative z-10 flex-1 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 focus:outline-none flex items-center justify-center gap-1.5 sm:gap-2 active:scale-95 touch-manipulation min-h-[48px]"
-          >
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            <span class="leading-none">Activities</span>
-          </button>
-          
-          <button
-            (click)="activeTab = 'vibes'"
-            [class.text-white]="activeTab === 'vibes'"
-            [class.text-gray-600]="activeTab !== 'vibes'"
-            class="relative z-10 flex-1 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 focus:outline-none flex items-center justify-center gap-1.5 sm:gap-2 active:scale-95 touch-manipulation min-h-[48px]"
-          >
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span class="leading-none">Vibes</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Posts Tab Content -->
-      <div *ngIf="activeTab === 'posts'" class="space-y-6">
-        <!-- New Posts Notification -->
-        <div
-          *ngIf="hasNewPosts"
-          class="mb-4 animate-slideDown"
-          role="status"
-          aria-live="polite"
-        >
-          <button 
-            (click)="loadNewPosts()"
-            class="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#70AEB9]/50"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-            </svg>
-            New posts available • Tap to refresh
-          </button>
-        </div>
-
-        <!-- Offline Banner -->
-        <div
-          *ngIf="isOffline"
-          class="mb-4 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 flex items-center gap-3"
-          role="alert"
-        >
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
-          </svg>
-          <span>You're offline. Showing cached posts.</span>
-        </div>
-
-        <!-- Post Composer -->
-        <div class="mb-6 sm:mb-8">
-          <app-post-composer
-            (postCreated)="onPostCreated()"
-          ></app-post-composer>
-        </div>
-
-        <!-- Empty State: No Posts -->
-        <div
-          *ngIf="!loading && posts.length === 0"
-          class="py-16 sm:py-20 text-center animate-fadeIn"
-        >
-        <div class="max-w-md mx-auto px-4">
-          <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#70AEB9]/20 to-[#4ECDC4]/20 flex items-center justify-center">
-            <svg class="w-10 h-10 text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-3">Be the First!</h2>
-          <p class="text-gray-600 mb-6">
-            No posts yet. Share something awesome and start the conversation! 🌟
-          </p>
-        </div>
-              </div>
-
-        <!-- Feed Posts -->
-        <div
-          *ngIf="posts.length > 0"
-          class="space-y-4 sm:space-y-6"
-          role="feed"
-          aria-busy="loading"
-        >
-        <app-feed-card
-          *ngFor="let post of posts; trackBy: trackByPostId"
-          [post]="post"
-          (comment)="onComment($event)"
-          (delete)="onDelete($event)"
-        ></app-feed-card>
-              </div>
-
-      <!-- Loading Spinner -->
-      <div
-        *ngIf="loading"
-        class="py-12 sm:py-16 flex justify-center"
-        role="status"
-        aria-live="polite"
-      >
-        <div class="flex flex-col items-center gap-3">
-          <svg class="animate-spin h-10 w-10 text-[#70AEB9]" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span class="text-gray-600 text-sm">Loading feed...</span>
-            </div>
-          </div>
-
-        <!-- End of Feed Message -->
-        <div
-          *ngIf="!loading && posts.length > 0 && !hasMorePosts"
-          class="py-10 sm:py-12 text-center animate-fadeIn"
-        >
-          <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-50 text-gray-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>You're all caught up! 🎉</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vibes Tab Content -->
-      <div *ngIf="activeTab === 'vibes'" class="space-y-6">
+      <!-- Activities Grid -->
+      <div class="space-y-6">
+      <div class="space-y-6">
         <!-- Search Bar -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -218,7 +77,7 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
           <div
             *ngFor="let game of displayedVibesGames"
             class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg flex flex-col"
-            (click)="goToCreateMatch(game.id, 'non_competitive')"
+            (click)="goToActivityDetail(game)"
           >
             <div class="w-full h-32 sm:h-32 md:h-36 flex-shrink-0 bg-gray-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
               <img
@@ -235,7 +94,7 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
 
               <div class="flex items-center justify-between mt-2 sm:mt-3">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                  Vibes
+                  {{ game.game_mode === 'non_competitive' ? 'Vibes' : 'Competitive' }}
                 </span>
 
                 <div class="flex items-center gap-1">
@@ -263,13 +122,13 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
           <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <p class="text-gray-600 text-lg font-semibold mb-2">No Vibes Selected Yet</p>
+          <p class="text-gray-600 text-lg font-semibold mb-2">No Activities Selected Yet</p>
           <p class="text-gray-500 text-sm mb-6">Choose your favorite activities to get started!</p>
           <button (click)="updateSelectedVibes()" class="px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white rounded-lg hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-semibold">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span>Select Vibes</span>
+            <span>Select Activities</span>
           </button>
         </div>
       </div>
@@ -314,7 +173,6 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   posts: FeedPost[] = [];
-  activeTab: 'posts' | 'vibes' = 'posts';
   loading = false;
 
   // Vibes related properties
@@ -592,40 +450,14 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     this.vibesSearchText = '';
   }
 
-  goToCreateMatch(gameId: number, gameMode?: GameMode) {
-    console.log('goToCreateMatch called with:', { gameId, gameMode });
+  goToActivityDetail(game: Game) {
+    console.log('Navigating to activity detail for:', game);
 
-    // For non-competitive games (vibes), navigate to activity submission
-    if (gameMode === 'non_competitive') {
-      console.log('Navigating to activity submission with ID:', gameId);
-      console.log('Available displayedVibesGames:', this.displayedVibesGames);
+    // Store the activity data in sessionStorage for the detail page
+    sessionStorage.setItem('selectedActivity', JSON.stringify(game));
 
-      // Find the game object from the displayed vibes
-      const game = this.displayedVibesGames.find(g => g.id === gameId);
-      console.log('Found game object:', game);
-
-      // Store the activity data in sessionStorage for the submission page
-      if (game) {
-        sessionStorage.setItem('selectedActivity', JSON.stringify(game));
-        console.log('Stored activity in sessionStorage:', game);
-      } else {
-        console.warn('Game not found in displayedVibesGames');
-        sessionStorage.removeItem('selectedActivity');
-      }
-
-      this.router.navigate(['/app/activity-submission', gameId]);
-      return;
-    }
-
-    // For competitive games, navigate to create match
-    const queryParams = gameMode ? { game_mode: gameMode } : {};
-
-    this.router.navigate(
-      ['/app/create-match', gameId],
-      {
-        queryParams: queryParams
-      }
-    );
+    // Navigate to activity detail page
+    this.router.navigate(['/app/activity-detail', game.id]);
   }
 
   updateSelectedVibes(): void {

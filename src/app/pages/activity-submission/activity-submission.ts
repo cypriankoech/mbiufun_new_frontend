@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -67,6 +67,9 @@ export class ActivitySubmissionComponent implements OnInit {
 
   // Location
   activityLocation = '';
+  locationSearchControl = new FormControl('');
+  locationSuggestions: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }[] = [];
+  selectedLocation: { name: string, address: string, latitude: number, longitude: number, google_place_id: string } | null = null;
 
   constructor() {
     this.participantSearchForm = this.fb.group({
@@ -104,6 +107,57 @@ export class ActivitySubmissionComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadActivity();
+    this.setupLocationSearch();
+  }
+
+  private setupLocationSearch(): void {
+    // Setup debounced location search
+    this.locationSearchControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (!query || query.trim().length < 3) {
+          this.locationSuggestions = [];
+          return of([]);
+        }
+        return this.searchLocations(query.trim());
+      })
+    ).subscribe({
+      next: (suggestions) => {
+        this.locationSuggestions = suggestions;
+      },
+      error: (error) => {
+        console.error('Location search error:', error);
+        this.locationSuggestions = [];
+      }
+    });
+  }
+
+  private searchLocations(query: string) {
+    const headers = this.getHeaders();
+    const params = new HttpParams()
+      .set('q', query);
+
+    return this.http.get<{ data: any[] }>(
+      `${environment.apiUrl.replace(/\/$/, '')}/api/games/location/search/`,
+      { headers, params }
+    ).pipe(
+      switchMap(response => of(response.data || []))
+    );
+  }
+
+  selectLocation(location: { name: string, address: string, latitude: number, longitude: number, google_place_id: string }): void {
+    this.selectedLocation = location;
+    this.activityLocation = location.name;
+    this.locationSearchControl.setValue(location.name);
+    this.locationSuggestions = [];
+  }
+
+  clearLocation(): void {
+    this.selectedLocation = null;
+    this.activityLocation = '';
+    this.locationSearchControl.setValue('');
+    this.locationSuggestions = [];
   }
 
   private loadActivity(): void {
@@ -323,7 +377,7 @@ export class ActivitySubmissionComponent implements OnInit {
       imageUrl: this.uploadedPhotos[0]?.preview || '', // Use first uploaded photo
       participants: this.participants.map(p => p.username),
       caption: this.activityCaption,
-      location: this.activityLocation
+      location: this.selectedLocation || this.activityLocation // Use selected location object or fallback to text
     };
 
     // Store shared content for the share screen
