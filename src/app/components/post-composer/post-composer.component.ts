@@ -295,7 +295,7 @@ export class PostComposerComponent implements OnInit {
   selectedLocation: { name: string, address: string, latitude: number, longitude: number, google_place_id: string } | null = null;
 
   // Visibility properties
-  selectedVisibility: { is_public: boolean; bubbles: number[]; individuals: number[]; groups: number[] } = {
+  selectedVisibility: { is_public: boolean; bubbles: string[]; individuals: number[]; groups: number[] } = {
     is_public: true,
     bubbles: [],
     individuals: [],

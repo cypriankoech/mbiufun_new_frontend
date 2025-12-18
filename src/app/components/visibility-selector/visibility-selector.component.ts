@@ -6,9 +6,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '@environments/environment';
 
 interface Bubble {
-  id: number;
+  id: string;
   name: string;
   img_url?: string;
+  memberCount?: number;
 }
 
 interface Individual {
@@ -33,7 +34,7 @@ interface VisibilityGroup {
 
 interface VisibilitySelection {
   is_public: boolean;
-  bubbles: number[];
+  bubbles: string[];
   individuals: number[];
   groups: number[];
 }
@@ -309,7 +310,7 @@ export class VisibilitySelectorComponent implements OnInit {
   groups: VisibilityGroup[] = [];
 
   // Selection state
-  selectedBubbleIds: Set<number> = new Set();
+  selectedBubbleIds: Set<string> = new Set();
   selectedIndividuals: Individual[] = [];
   selectedGroupIds: Set<number> = new Set();
   
@@ -334,10 +335,18 @@ export class VisibilitySelectorComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.get<{ games: Bubble[] }>(`${environment.apiUrl}v1/games/games/my-vibes/`, { headers })
+    // Fetch user's chat groups/bubbles
+    this.http.get<any[]>(`${environment.apiUrl}api/v1/chat/groups`, { headers })
       .subscribe({
         next: (response) => {
-          this.bubbles = response.games || [];
+          // Transform the response to match our Bubble interface
+          this.bubbles = response.map((group: any) => ({
+            id: group.participant?.id || group.id,
+            name: group.participant?.displayName || group.name || 'Unnamed Bubble',
+            img_url: group.participant?.avatar || group.avatar,
+            memberCount: group.participant?.participantCount || group.participant?.chattingTo?.length || 0
+          }));
+          console.log('📦 Loaded bubbles:', this.bubbles);
           this.selectAllBubblesOnLoad();
           this.loadingBubbles = false;
         },
@@ -399,7 +408,7 @@ export class VisibilitySelectorComponent implements OnInit {
   }
 
   // Bubble methods
-  toggleBubble(id: number): void {
+  toggleBubble(id: string): void {
     if (this.selectedBubbleIds.has(id)) {
       this.selectedBubbleIds.delete(id);
     } else {
@@ -407,7 +416,7 @@ export class VisibilitySelectorComponent implements OnInit {
     }
   }
 
-  isBubbleSelected(id: number): boolean {
+  isBubbleSelected(id: string): boolean {
     return this.selectedBubbleIds.has(id);
   }
 

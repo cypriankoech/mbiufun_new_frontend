@@ -100,7 +100,7 @@ export interface CreatePostPayload {
   };
   visibility?: {
     is_public: boolean;
-    bubbles: number[];
+    bubbles: string[];
     individuals: number[];
     groups: number[];
   };
