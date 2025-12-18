@@ -121,8 +121,9 @@ import { FeedPost } from '@app/services/feed.service';
         </div>
       </div>
 
-      <!-- Post Images -->
-      <div *ngIf="post.image_urls && post.image_urls.length > 0" class="border-t border-gray-100">
+      <!-- Post Images Carousel -->
+      <div *ngIf="post.image_urls && post.image_urls.length > 0" class="border-t border-gray-100 relative">
+        <!-- Single Image (no carousel needed) -->
         <div *ngIf="post.image_urls.length === 1" class="p-0">
           <img
             [src]="post.image_urls[0]"
@@ -132,29 +133,64 @@ import { FeedPost } from '@app/services/feed.service';
             (error)="onImageError($event)"
           />
         </div>
-        <div *ngIf="post.image_urls.length === 2" class="p-0">
-          <div class="grid grid-cols-2 gap-0.5">
-            <img
-              *ngFor="let imageUrl of post.image_urls"
-              [src]="imageUrl"
-              [alt]="'Image from post by ' + post.author.first_name"
-              class="w-full h-48 sm:h-64 object-cover"
-              loading="lazy"
-              (error)="onImageError($event)"
-            />
-          </div>
-        </div>
-        <div *ngIf="post.image_urls.length >= 3" class="p-0">
-          <div class="grid grid-cols-2 gap-0.5">
+
+        <!-- Multiple Images Carousel -->
+        <div *ngIf="post.image_urls.length > 1" class="relative overflow-hidden group">
+          <!-- Image Container -->
+          <div class="relative h-64 sm:h-80 md:h-96">
             <img
               *ngFor="let imageUrl of post.image_urls; let i = index"
               [src]="imageUrl"
-              [alt]="'Image from post by ' + post.author.first_name"
-              [class]="i === 0 ? 'row-span-2 h-64 sm:h-80' : 'h-32 sm:h-40'"
-              class="w-full object-cover"
+              [alt]="'Image ' + (i + 1) + ' from post by ' + post.author.first_name"
+              class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+              [class.opacity-100]="i === currentImageIndex"
+              [class.opacity-0]="i !== currentImageIndex"
               loading="lazy"
               (error)="onImageError($event)"
+              (touchstart)="onTouchStart($event)"
+              (touchmove)="onTouchMove($event)"
+              (touchend)="onTouchEnd()"
             />
+          </div>
+
+          <!-- Navigation Arrows (only show on hover/desktop or always on mobile) -->
+          <button
+            *ngIf="post.image_urls.length > 2"
+            (click)="previousImage()"
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 md:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
+            aria-label="Previous image"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <button
+            *ngIf="post.image_urls.length > 2"
+            (click)="nextImage()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 md:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
+            aria-label="Next image"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <!-- Dot Indicators -->
+          <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+            <button
+              *ngFor="let imageUrl of post.image_urls; let i = index"
+              (click)="goToImage(i)"
+              class="w-2 h-2 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+              [class.bg-white]="i === currentImageIndex"
+              [class.bg-white/50]="i !== currentImageIndex"
+              [attr.aria-label]="'Go to image ' + (i + 1)"
+            ></button>
+          </div>
+
+          <!-- Image Counter (optional, for clarity) -->
+          <div class="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md font-medium">
+            {{ currentImageIndex + 1 }} / {{ post.image_urls.length }}
           </div>
         </div>
       </div>
@@ -229,6 +265,12 @@ export class FeedCardComponent {
 
   showMenu = false;
 
+  // Image carousel state
+  currentImageIndex = 0;
+  isDragging = false;
+  startX = 0;
+  currentX = 0;
+
   toggleMenu(): void {
     this.showMenu = !this.showMenu;
   }
@@ -288,6 +330,56 @@ export class FeedCardComponent {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
     console.warn('Failed to load image:', this.post.image_urls?.[0] || 'unknown image');
+  }
+
+  // Image carousel methods
+  nextImage(): void {
+    if (this.post.image_urls && this.post.image_urls.length > 1) {
+      this.currentImageIndex = (this.currentImageIndex + 1) % this.post.image_urls.length;
+    }
+  }
+
+  previousImage(): void {
+    if (this.post.image_urls && this.post.image_urls.length > 1) {
+      this.currentImageIndex = this.currentImageIndex === 0
+        ? this.post.image_urls.length - 1
+        : this.currentImageIndex - 1;
+    }
+  }
+
+  goToImage(index: number): void {
+    if (this.post.image_urls && index >= 0 && index < this.post.image_urls.length) {
+      this.currentImageIndex = index;
+    }
+  }
+
+  // Touch/swipe handling
+  onTouchStart(event: TouchEvent): void {
+    this.isDragging = true;
+    this.startX = event.touches[0].clientX;
+    this.currentX = this.startX;
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    if (!this.isDragging) return;
+    this.currentX = event.touches[0].clientX;
+  }
+
+  onTouchEnd(): void {
+    if (!this.isDragging) return;
+
+    const diffX = this.startX - this.currentX;
+    const threshold = 50; // Minimum swipe distance
+
+    if (Math.abs(diffX) > threshold) {
+      if (diffX > 0) {
+        this.nextImage(); // Swipe left = next image
+      } else {
+        this.previousImage(); // Swipe right = previous image
+      }
+    }
+
+    this.isDragging = false;
   }
 }
 
