@@ -19,110 +19,104 @@ interface LocationResult {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <!-- Header -->
-        <div class="p-4 sm:p-6 border-b border-gray-200">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">📍 Choose Location</h2>
-            <button
-              (click)="close()"
-              class="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Close"
-            >
-              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="p-4 sm:p-6 border-b border-gray-200">
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              [(ngModel)]="searchQuery"
-              (input)="onSearchInput()"
-              placeholder="Search for a place..."
-              class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9] focus:border-transparent"
-            />
-          </div>
-
-          <!-- Search Results Dropdown -->
-          <div *ngIf="searchResults.length > 0" class="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            <button
-              *ngFor="let result of searchResults"
-              (click)="selectSearchResult(result)"
-              class="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-start gap-3"
-            >
-              <svg class="w-5 h-5 text-[#70AEB9] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              <div class="flex-1 min-w-0">
-                <p class="font-medium text-gray-900 truncate">{{ result.name }}</p>
-                <p class="text-sm text-gray-500 truncate">{{ result.address }}</p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Map Container -->
-        <div class="flex-1 relative min-h-[400px] bg-gray-100">
-          <div #mapContainer class="w-full h-full"></div>
-          
-          <!-- Loading State -->
-          <div *ngIf="loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
-            <div class="text-center">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#70AEB9] mx-auto mb-4"></div>
-              <p class="text-gray-600">Loading map...</p>
-            </div>
-          </div>
-
-          <!-- Selected Location Info -->
-          <div *ngIf="selectedLocation" class="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-            <div class="flex items-start gap-3">
-              <svg class="w-6 h-6 text-[#70AEB9] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-900">{{ selectedLocation.name }}</p>
-                <p class="text-sm text-gray-600 mt-1">{{ selectedLocation.address }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="p-4 sm:p-6 border-t border-gray-200 flex gap-3">
+    <div class="h-screen w-screen flex flex-col bg-white overflow-hidden">
+      <!-- Header -->
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900">📍 Choose Location</h2>
           <button
             (click)="close()"
-            class="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+            class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close"
           >
-            Cancel
-          </button>
-          <button
-            (click)="confirm()"
-            [disabled]="!selectedLocation"
-            class="flex-1 px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Confirm Location
+            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
       </div>
+
+      <!-- Search Bar -->
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (input)="onSearchInput()"
+            placeholder="Search for a place..."
+            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#70AEB9] focus:border-transparent"
+          />
+        </div>
+
+        <!-- Search Results Dropdown -->
+        <div *ngIf="searchResults.length > 0" class="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <button
+            *ngFor="let result of searchResults"
+            (click)="selectSearchResult(result)"
+            class="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-start gap-3"
+          >
+            <svg class="w-5 h-5 text-[#70AEB9] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-gray-900 truncate">{{ result.name }}</p>
+              <p class="text-sm text-gray-500 truncate">{{ result.address }}</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Map Container -->
+      <div class="flex-1 relative bg-gray-100 overflow-hidden">
+        <div #mapContainer style="width: 100%; height: 100%;"></div>
+        
+        <!-- Loading State -->
+        <div *ngIf="loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#70AEB9] mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading map...</p>
+          </div>
+        </div>
+
+        <!-- Selected Location Info -->
+        <div *ngIf="selectedLocation" class="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200 z-10">
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-[#70AEB9] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-gray-900">{{ selectedLocation.name }}</p>
+              <p class="text-sm text-gray-600 mt-1">{{ selectedLocation.address }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 sm:p-6 border-t border-gray-200 flex gap-3 flex-shrink-0">
+        <button
+          (click)="close()"
+          class="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="confirm()"
+          [disabled]="!selectedLocation"
+          class="flex-1 px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          Confirm Location
+        </button>
+      </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: contents;
-    }
-  `]
+  styles: []
 })
 export class MapLocationPickerComponent implements OnInit {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;

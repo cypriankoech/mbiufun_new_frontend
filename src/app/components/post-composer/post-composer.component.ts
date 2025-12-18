@@ -352,12 +352,14 @@ export class PostComposerComponent implements OnInit {
 
   openMapPicker(): void {
     const dialogRef = this.dialog.open(MapLocationPickerComponent, {
-      maxWidth: '100vw',
       width: '100vw',
+      maxWidth: '100vw',
       height: '100vh',
       maxHeight: '100vh',
-      panelClass: 'full-screen-dialog',
-      disableClose: false
+      panelClass: ['full-screen-dialog'],
+      hasBackdrop: true,
+      disableClose: false,
+      autoFocus: false
     });
 
     dialogRef.afterClosed().subscribe(result => {
