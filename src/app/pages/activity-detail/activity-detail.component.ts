@@ -92,10 +92,14 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
 
   private loadActivityPosts(page: number = 1): void {
     this.loading = true;
+    console.log('🔄 Loading posts - page:', page);
 
     // For now, load all posts. Later we can filter by activity
     this.feedService.getUnifiedFeed(page, 20).subscribe({
       next: (response: UnifiedFeedResponse) => {
+        console.log('✅ Posts loaded successfully:', response);
+        console.log('📊 Number of posts:', response.results?.length);
+        
         if (page === 1) {
           this.posts = response.results;
         } else {
@@ -104,9 +108,13 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
         this.hasMorePosts = !!response.next;
         this.currentPage = page;
         this.loading = false;
+        
+        console.log('📝 Total posts in component:', this.posts.length);
       },
       error: (error) => {
-        console.error('Failed to load posts:', error);
+        console.error('❌ Failed to load posts:', error);
+        console.error('❌ Error status:', error.status);
+        console.error('❌ Error message:', error.message);
         this.loading = false;
 
         if (error.status === 401) {
