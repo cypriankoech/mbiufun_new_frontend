@@ -1,10 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { debounceTime, distinctUntilChanged, switchMap, of, Subject } from 'rxjs';
+import { CreateVisibilityGroupDialogComponent } from '../create-visibility-group-dialog/create-visibility-group-dialog.component';
 
 interface Bubble {
   id: string;
@@ -312,6 +313,7 @@ interface VisibilitySelection {
 })
 export class VisibilitySelectorComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<VisibilitySelectorComponent>);
 
   // Data
@@ -406,7 +408,7 @@ export class VisibilitySelectorComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.get<{ groups: VisibilityGroup[] }>(`${environment.apiUrl}v1/posts/visibility_groups/`, { headers })
+    this.http.get<{ groups: VisibilityGroup[] }>(`${environment.apiUrl}api/v1/posts/visibility_groups/`, { headers })
       .subscribe({
         next: (response) => {
           this.groups = response.groups || [];
@@ -539,8 +541,32 @@ export class VisibilitySelectorComponent implements OnInit {
   }
 
   openCreateGroup(): void {
-    // TODO: Open group creation dialog
-    console.log('Create group clicked');
+    const dialogRef = this.dialog.open(CreateVisibilityGroupDialogComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      maxHeight: '85vh',
+      disableClose: false,
+      panelClass: 'create-group-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe((newGroup: any) => {
+      if (newGroup) {
+        console.log('✅ New visibility group created:', newGroup);
+        
+        // Add the new group to the list
+        this.groups.push({
+          id: newGroup.id,
+          name: newGroup.name,
+          member_count: newGroup.member_count || 0,
+          members: newGroup.members || []
+        });
+        
+        // Auto-select the newly created group
+        this.selectedGroupIds.add(newGroup.id);
+        
+        console.log('📦 Updated groups list:', this.groups);
+      }
+    });
   }
 
   confirm(): void {
