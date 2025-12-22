@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
@@ -39,7 +39,7 @@ interface NewVisibilityGroup {
       <!-- Header -->
       <div class="p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4]">
         <div class="flex items-center justify-between mb-2">
-          <h2 class="text-2xl font-bold text-white">Create Group</h2>
+          <h2 class="text-2xl font-bold text-white">{{ isEditMode ? 'Edit Group' : 'Create Group' }}</h2>
           <button
             (click)="close()"
             class="p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -254,7 +254,7 @@ interface NewVisibilityGroup {
           [class.cursor-not-allowed]="!isFormValid"
           class="flex-1 px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:hover:shadow-none"
         >
-          Create Group
+          {{ isEditMode ? 'Update Group' : 'Create Group' }}
         </button>
       </div>
     </div>
@@ -264,6 +264,7 @@ interface NewVisibilityGroup {
 export class CreateVisibilityGroupDialogComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly dialogRef = inject(MatDialogRef<CreateVisibilityGroupDialogComponent>);
+  private readonly data = inject(MAT_DIALOG_DATA);
 
   // Form controls
   groupNameControl = new FormControl('', [
@@ -276,6 +277,10 @@ export class CreateVisibilityGroupDialogComponent implements OnInit {
   // Tab state
   activeTab: 'people' | 'bubbles' = 'people';
 
+  // Edit mode
+  isEditMode = false;
+  editingGroup: any = null;
+
   // Data
   bubbles: Bubble[] = [];
   selectedBubbleIds: Set<string> = new Set();
@@ -287,8 +292,16 @@ export class CreateVisibilityGroupDialogComponent implements OnInit {
   isSearchingPeople = false;
 
   ngOnInit(): void {
+    // Check if we're in edit mode
+    this.isEditMode = this.data?.isEditMode || false;
+    this.editingGroup = this.data?.group || null;
+
     this.loadBubbles();
     this.setupPeopleSearch();
+
+    if (this.isEditMode && this.editingGroup) {
+      this.populateEditData();
+    }
   }
 
   private setupPeopleSearch(): void {
@@ -341,6 +354,20 @@ export class CreateVisibilityGroupDialogComponent implements OnInit {
           this.loadingBubbles = false;
         }
       });
+  }
+
+  private populateEditData(): void {
+    // Pre-populate form with existing group data
+    this.groupNameControl.setValue(this.editingGroup.name);
+
+    // Pre-populate members
+    this.editingGroup.members.forEach((member: any) => {
+      if (member.member_type === 'user' && member.user_details) {
+        this.selectedPeople.push(member.user_details);
+      } else if (member.member_type === 'bubble') {
+        this.selectedBubbleIds.add(member.bubble_id);
+      }
+    });
   }
 
   private searchPeople(query: string) {
@@ -445,14 +472,20 @@ export class CreateVisibilityGroupDialogComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.post(`${environment.apiUrl}api/v1/posts/visibility_groups/create/`, groupData, { headers })
+    const url = this.isEditMode
+      ? `${environment.apiUrl}api/v1/posts/visibility_groups/${this.editingGroup.id}/`
+      : `${environment.apiUrl}api/v1/posts/visibility_groups/create/`;
+
+    const httpMethod = this.isEditMode ? 'put' : 'post';
+
+    this.http[httpMethod](url, groupData, { headers })
       .subscribe({
         next: (response: any) => {
-          console.log('✅ Visibility group created:', response);
-          this.dialogRef.close(response); // Return the created group
+          console.log(`✅ Visibility group ${this.isEditMode ? 'updated' : 'created'}:`, response);
+          this.dialogRef.close(response); // Return the created/updated group
         },
         error: (error) => {
-          console.error('❌ Error creating visibility group:', error);
+          console.error(`❌ Error ${this.isEditMode ? 'updating' : 'creating'} visibility group:`, error);
           // Could add error handling/toast here
           this.dialogRef.close(null);
         }

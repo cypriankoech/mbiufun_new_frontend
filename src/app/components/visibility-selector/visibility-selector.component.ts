@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -253,32 +253,77 @@ interface VisibilitySelection {
 
           <!-- Groups List -->
           <div *ngIf="!loadingGroups && groups.length > 0" class="space-y-3">
-            <button
+            <div
               *ngFor="let group of groups"
-              (click)="toggleGroup(group.id)"
               [class.ring-2]="isGroupSelected(group.id)"
               [class.ring-[#70AEB9]]="isGroupSelected(group.id)"
               [class.bg-[#70AEB9]/10]="isGroupSelected(group.id)"
-              class="w-full p-4 flex items-center justify-between border border-gray-200 rounded-xl hover:border-[#70AEB9] hover:bg-gray-50 transition-all group"
+              class="relative border border-gray-200 rounded-xl hover:border-[#70AEB9] hover:bg-gray-50 transition-all group"
             >
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
-                  </svg>
+              <button
+                (click)="toggleGroup(group.id)"
+                class="w-full p-4 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                    </svg>
+                  </div>
+                  <div class="text-left">
+                    <p class="font-semibold text-gray-900">{{ group.name }}</p>
+                    <p class="text-sm text-gray-500">{{ group.member_count }} members</p>
+                  </div>
                 </div>
-                <div class="text-left">
-                  <p class="font-semibold text-gray-900">{{ group.name }}</p>
-                  <p class="text-sm text-gray-500">{{ group.member_count }} members</p>
+
+                <div class="flex items-center gap-2">
+                  <div *ngIf="isGroupSelected(group.id)" class="w-6 h-6 bg-[#70AEB9] rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+
+                  <!-- Group Actions Menu -->
+                  <div class="relative">
+                    <button
+                      (click)="toggleGroupMenu($event, group.id)"
+                      class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="Group options"
+                    >
+                      <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                      </svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div
+                      *ngIf="activeGroupMenu === group.id"
+                      class="absolute right-0 top-8 z-10 w-32 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <button
+                        (click)="editGroup(group); $event.stopPropagation()"
+                        class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit
+                      </button>
+                      <button
+                        (click)="deleteGroup(group); $event.stopPropagation()"
+                        class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div *ngIf="isGroupSelected(group.id)" class="w-6 h-6 bg-[#70AEB9] rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </button>
+              </button>
+            </div>
           </div>
 
           <!-- Empty State -->
@@ -332,6 +377,7 @@ export class VisibilitySelectorComponent implements OnInit {
   individualSearchControl = new FormControl('');
   individualSearchResults: Individual[] = [];
   isSearchingIndividuals = false;
+  activeGroupMenu: number | null = null;
 
   ngOnInit(): void {
     this.loadBubbles();
@@ -582,6 +628,69 @@ export class VisibilitySelectorComponent implements OnInit {
 
   close(): void {
     this.dialogRef.close(null);
+  }
+
+  // Group menu methods
+  toggleGroupMenu(event: Event, groupId: number): void {
+    event.stopPropagation();
+    this.activeGroupMenu = this.activeGroupMenu === groupId ? null : groupId;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    // Close group menu when clicking outside
+    this.activeGroupMenu = null;
+  }
+
+  editGroup(group: VisibilityGroup): void {
+    this.activeGroupMenu = null;
+    // Open the create group dialog in edit mode
+    const dialogRef = this.dialog.open(CreateVisibilityGroupDialogComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      maxHeight: '85vh',
+      disableClose: false,
+      panelClass: 'create-group-dialog',
+      data: { group, isEditMode: true }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        console.log('✅ Group updated:', result);
+        // Update the group in the list
+        const index = this.groups.findIndex(g => g.id === result.id);
+        if (index !== -1) {
+          this.groups[index] = result;
+        }
+      }
+    });
+  }
+
+  deleteGroup(group: VisibilityGroup): void {
+    this.activeGroupMenu = null;
+    const confirmDelete = confirm(`Are you sure you want to delete "${group.name}"? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    const token = this.getToken();
+    const headers = new HttpHeaders({
+      'mbiu-token': token,
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.delete(`${environment.apiUrl}api/v1/posts/visibility_groups/${group.id}/delete/`, { headers })
+      .subscribe({
+        next: () => {
+          console.log('✅ Group deleted:', group.name);
+          // Remove from the list
+          this.groups = this.groups.filter(g => g.id !== group.id);
+          // Remove from selection if it was selected
+          this.selectedGroupIds.delete(group.id);
+        },
+        error: (error) => {
+          console.error('❌ Error deleting group:', error);
+          alert('Failed to delete group. Please try again.');
+        }
+      });
   }
 
   private getToken(): string {
