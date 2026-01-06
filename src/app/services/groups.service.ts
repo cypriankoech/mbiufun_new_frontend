@@ -36,6 +36,11 @@ export interface GroupData {
   };
   metadata: {
     totalUnreadMessages: number;
+    lastMessage?: {
+      text: string;
+      sender: string;
+      time: string;
+    };
   };
 }
 
@@ -156,12 +161,16 @@ export class GroupsService {
         };
       });
 
-      // Generate mock last message (in a real app, this would come from the API)
-      const lastMessage = this.generateMockLastMessage(recentMembers);
-
-      // Generate mock activity data
-      const activities = ['Planning', 'Challenge', 'Studying', 'Creating'];
-      const activityType = activities[Math.floor(Math.random() * activities.length)];
+      // Use real last message if available, otherwise no message
+      let lastMessage: GroupMessage | undefined;
+      if (apiGroup.metadata.lastMessage) {
+        lastMessage = {
+          sender: apiGroup.metadata.lastMessage.sender,
+          senderInitials: this.getInitials(apiGroup.metadata.lastMessage.sender),
+          text: apiGroup.metadata.lastMessage.text,
+          time: apiGroup.metadata.lastMessage.time
+        };
+      }
 
       return {
         id: participant.id,
