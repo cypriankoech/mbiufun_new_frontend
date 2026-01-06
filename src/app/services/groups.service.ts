@@ -179,7 +179,6 @@ export class GroupsService {
         memberCount: participant.participantCount || chattingTo.length, // Use API participantCount if available, otherwise calculate from chattingTo
         unreadCount: apiGroup.metadata.totalUnreadMessages || Math.floor(Math.random() * 8),
         hasActivity: Math.random() > 0.5,
-        activityType,
         lastMessage,
         recentMembers
       };
