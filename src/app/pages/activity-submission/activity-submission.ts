@@ -317,9 +317,9 @@ export class ActivitySubmissionComponent implements OnInit {
       return;
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      this.snackBar.open('File size must be less than 5MB', 'Close', {
+    // Validate file size (15MB limit)
+    if (file.size > 15 * 1024 * 1024) {
+      this.snackBar.open('File size must be less than 15MB', 'Close', {
         duration: 2000,
         horizontalPosition: 'center',
         verticalPosition: 'top'
