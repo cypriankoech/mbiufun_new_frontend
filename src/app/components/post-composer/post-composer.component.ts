@@ -487,7 +487,7 @@ export class PostComposerComponent implements OnInit {
     }
 
     // Validate and compress file size
-    const maxSize = 3 * 1024 * 1024; // 3MB (reasonable for compressed images)
+    const maxSize = 15 * 1024 * 1024; // 15MB (increased limit for activity posts)
     let processedFile = file;
 
     // Show compression loading for large files
@@ -504,7 +504,7 @@ export class PostComposerComponent implements OnInit {
       try {
         processedFile = await this.compressImage(file, maxSize);
         if (processedFile.size > maxSize) {
-          this.snackBar.open('File size must be less than 3MB after compression', 'Close', {
+          this.snackBar.open('File size must be less than 15MB', 'Close', {
             duration: 3000,
             horizontalPosition: 'center',
             verticalPosition: 'top'

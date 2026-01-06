@@ -41,6 +41,10 @@ interface BackendPost {
     time: string;
     link: string;
   };
+  bubble_tags?: {
+    id: string;
+    name: string;
+  }[];
 }
 
 // Frontend interface
@@ -78,6 +82,10 @@ export interface FeedPost {
     time: string;
     link: string;
   };
+  bubble_tags?: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export interface UnifiedFeedResponse {
@@ -221,7 +229,8 @@ export class FeedService {
       is_liked: backendPost.is_liked,
       is_friend_post: backendPost.is_friend_post,
       post_type: backendPost.post_type,
-      event_details: backendPost.event_details
+      event_details: backendPost.event_details,
+      bubble_tags: backendPost.bubble_tags
     };
   }
 
