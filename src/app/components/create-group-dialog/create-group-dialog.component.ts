@@ -61,13 +61,16 @@ interface SelectedParticipant {
         
         <div class="flex items-center gap-4 mb-2">
           <div class="w-14 h-14 bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] rounded-2xl flex items-center justify-center shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg *ngIf="!isEditing" class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <svg *ngIf="isEditing" class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <div>
-            <h2 class="text-2xl font-bold text-gray-900">Create New Bubble</h2>
-            <p class="text-sm text-gray-500">Build your community space</p>
+            <h2 class="text-2xl font-bold text-gray-900">{{ isEditing ? 'Edit Bubble' : 'Create New Bubble' }}</h2>
+            <p class="text-sm text-gray-500">{{ isEditing ? 'Update your community space' : 'Build your community space' }}</p>
           </div>
         </div>
       </div>
@@ -328,7 +331,7 @@ interface SelectedParticipant {
               <div class="absolute inset-0 border-4 border-[#70AEB9]/20 rounded-full"></div>
               <div class="absolute inset-0 border-4 border-transparent border-t-[#70AEB9] rounded-full animate-spin"></div>
             </div>
-            <p class="text-sm font-medium text-gray-600">Creating your bubble...</p>
+            <p class="text-sm font-medium text-gray-600">{{ isEditing ? 'Updating your bubble...' : 'Creating your bubble...' }}</p>
           </div>
 
         </form>
@@ -355,7 +358,7 @@ interface SelectedParticipant {
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Create Bubble
+              {{ isEditing ? 'Update Bubble' : 'Create Bubble' }}
             </span>
           </button>
         </div>
@@ -393,6 +396,7 @@ export class CreateGroupDialogComponent {
 
   groupForm: FormGroup;
   isCreating = false;
+  isEditing = false;
 
   // Search functionality
   searchForm!: FormGroup;
@@ -445,6 +449,9 @@ export class CreateGroupDialogComponent {
   }
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
+    // Check if we're in editing mode
+    this.isEditing = data?.isEditing || false;
+
     this.groupForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       description: ['', [Validators.maxLength(500)]],
@@ -455,6 +462,16 @@ export class CreateGroupDialogComponent {
     this.searchForm = this.fb.group({
       query: ['']
     });
+
+    // If editing, pre-populate the form
+    if (this.isEditing && data?.group) {
+      this.groupForm.patchValue({
+        name: data.group.name || '',
+        description: data.group.description || '',
+        category: 'other', // Default for existing groups
+        privacy: 'public' // Default for existing groups
+      });
+    }
 
     // Set up search with debouncing
     this.setupSearch();
@@ -573,15 +590,19 @@ export class CreateGroupDialogComponent {
         participants: this.selectedParticipants.filter(p => p.username && p.username.trim()).map(p => p.username.trim()) // Include selected participants with valid usernames
       };
 
-      // Call the backend API to create the group
-      this.groupsService.createGroup(groupData).subscribe({
+      // Call the appropriate API based on mode
+      const apiCall = this.isEditing
+        ? this.groupsService.updateGroup(this.data.group.id, { name: groupData.name, description: groupData.description })
+        : this.groupsService.createGroup(groupData);
+
+      apiCall.subscribe({
         next: (response) => {
-          console.log('Group created successfully:', response);
-          
+          console.log(`${this.isEditing ? 'Group updated' : 'Group created'} successfully:`, response);
+
           // Get participant count from response
           const participantCount = response.participant_count || response.participantCount || (response.participant?.chattingTo?.length || 0);
-          
-          this.snackBar.open(`✨ "${groupData.name}" bubble created successfully!`, 'View', {
+
+          this.snackBar.open(`✨ "${groupData.name}" bubble ${this.isEditing ? 'updated' : 'created'} successfully!`, 'Close', {
             duration: 4000,
             horizontalPosition: 'center',
             verticalPosition: 'top',
@@ -589,14 +610,14 @@ export class CreateGroupDialogComponent {
           });
           this.dialogRef.close({
             ...groupData,
-            id: response.id || response.group_id || response.participant?.id,
+            id: response.id || response.group_id || response.participant?.id || this.data.group?.id,
             participants: response.participant?.chattingTo || [],
             participantCount: participantCount,
             createdAt: new Date().toISOString()
           });
         },
         error: (error) => {
-          console.error('Failed to create group:', error);
+          console.error(`Failed to ${this.isEditing ? 'update' : 'create'} group:`, error);
           this.isCreating = false;
 
           // Handle validation errors from backend
@@ -610,7 +631,7 @@ export class CreateGroupDialogComponent {
             });
           } else {
             // Show error message
-            const errorMessage = error.error?.detail || error.error?.message || error.message || 'Failed to create bubble. Please try again.';
+            const errorMessage = error.error?.detail || error.error?.message || error.message || `Failed to ${this.isEditing ? 'update' : 'create'} bubble. Please try again.`;
             this.snackBar.open(`❌ ${errorMessage}`, 'Close', {
               duration: 5000,
               horizontalPosition: 'center',
@@ -625,7 +646,7 @@ export class CreateGroupDialogComponent {
       Object.keys(this.groupForm.controls).forEach(key => {
         this.groupForm.get(key)?.markAsTouched();
       });
-      
+
       // Scroll to first error
       const firstError = document.querySelector('.border-red-400');
       if (firstError) {

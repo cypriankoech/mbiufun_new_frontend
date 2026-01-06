@@ -88,6 +88,33 @@ import { CreateGroupDialogComponent } from '@app/components/create-group-dialog/
           <!-- Group Header -->
           <div class="p-6 border-b border-gray-50">
             <div class="flex items-start justify-between mb-4">
+              <!-- Edit Menu -->
+              <div class="relative">
+                <button
+                  (click)="$event.stopPropagation(); toggleEditMenu(group)"
+                  class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                  aria-label="Group options"
+                >
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                  </svg>
+                </button>
+
+                <!-- Edit Dropdown Menu -->
+                <div *ngIf="editingGroup === group.id"
+                     class="absolute top-10 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-32">
+                  <button
+                    (click)="$event.stopPropagation(); editGroup(group)"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit Group
+                  </button>
+                </div>
+              </div>
+
               <div class="flex items-center gap-4">
                 <!-- Group Avatar -->
                 <div class="relative">
@@ -233,6 +260,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   groups: Group[] = [];
   isLoading = true;
+  editingGroup: string | null = null;
   private subscriptions: Subscription[] = [];
 
   async ngOnInit(): Promise<void> {
@@ -297,11 +325,51 @@ export class GroupsComponent implements OnInit, OnDestroy {
   }
 
   openGroup(group: any): void {
+    // Close any open edit menus
+    this.editingGroup = null;
     // Navigate to the group chat interface
     this.router.navigate(['/app/chat', group.id]);
   }
 
+  toggleEditMenu(group: any): void {
+    // Toggle the edit menu for this group
+    this.editingGroup = this.editingGroup === group.id ? null : group.id;
+  }
+
+  editGroup(group: any): void {
+    // Close the edit menu
+    this.editingGroup = null;
+
+    // Open the create group dialog in edit mode
+    const dialogRef = this.dialog.open(CreateGroupDialogComponent, {
+      width: '90vw',
+      maxWidth: '500px',
+      height: '90vh',
+      maxHeight: '700px',
+      panelClass: 'create-group-dialog-panel',
+      disableClose: true,
+      data: {
+        isEditing: true,
+        group: group
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        // Group was updated successfully, reload the groups list
+        this.loadGroups();
+        this.snackBar.open('Group updated successfully!', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top'
+        });
+      }
+    });
+  }
+
   ngOnDestroy(): void {
+    // Close any open edit menus
+    this.editingGroup = null;
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 }

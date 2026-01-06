@@ -126,6 +126,29 @@ export class GroupsService {
     );
   }
 
+  updateGroup(groupId: string, groupData: {
+    name: string;
+    description: string;
+  }): Observable<any> {
+    const headers = this.getHeaders();
+
+    const payload = {
+      id: groupId,
+      displayName: groupData.name,
+      description: groupData.description,
+      category: 'other', // Default category for updates
+      is_private: false, // Default privacy for updates
+      chattingTo: [] // No participant changes during basic info update
+    };
+
+    return this.http.post(`${this.baseUrl}/create_update_grp/`, payload, { headers }).pipe(
+      catchError(error => {
+        console.error('Failed to update group:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   addParticipant(groupId: string, identifier: string): Observable<any> {
     const headers = this.getHeaders();
 
