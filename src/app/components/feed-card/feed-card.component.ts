@@ -103,6 +103,7 @@ import { AuthenticationService } from '@app/services/authentication.service';
                 Friend
               </span>
               <!-- Bubble Tags -->
+              <!-- Temporarily disabled until DB column exists
               <span
                 *ngIf="post.bubble_tags && post.bubble_tags.length > 0"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
@@ -112,6 +113,7 @@ import { AuthenticationService } from '@app/services/authentication.service';
                 </svg>
                 {{ post.bubble_tags[0].name }}{{ post.bubble_tags.length > 1 ? ' +' + (post.bubble_tags.length - 1) : '' }}
               </span>
+              -->
             </div>
           </div>
         </div>

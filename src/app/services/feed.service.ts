@@ -41,10 +41,10 @@ interface BackendPost {
     time: string;
     link: string;
   };
-  bubble_tags?: {
-    id: string;
-    name: string;
-  }[];
+  // bubble_tags?: {
+  //   id: string;
+  //   name: string;
+  // }[];  // Temporarily disabled until DB column exists
 }
 
 // Frontend interface
@@ -82,10 +82,10 @@ export interface FeedPost {
     time: string;
     link: string;
   };
-  bubble_tags?: {
-    id: string;
-    name: string;
-  }[];
+  // bubble_tags?: {
+  //   id: string;
+  //   name: string;
+  // }[];  // Temporarily disabled until DB column exists
 }
 
 export interface UnifiedFeedResponse {
@@ -230,7 +230,7 @@ export class FeedService {
       is_friend_post: backendPost.is_friend_post,
       post_type: backendPost.post_type,
       event_details: backendPost.event_details,
-      bubble_tags: backendPost.bubble_tags
+      // bubble_tags: backendPost.bubble_tags  // Temporarily disabled until DB column exists
     };
   }
 
