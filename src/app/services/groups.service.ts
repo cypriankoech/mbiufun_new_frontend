@@ -29,7 +29,7 @@ export interface GroupData {
     participantType: number;
     id: string;
     displayName: string;
-    description?: string;
+    description?: string; // Will be available after backend migration
     avatar: string;
     status: number;
     chattingTo: GroupParticipant[];
