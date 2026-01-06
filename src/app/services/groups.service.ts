@@ -175,7 +175,7 @@ export class GroupsService {
       return {
         id: participant.id,
         name: participant.displayName,
-        description: this.generateMockDescription(participant.displayName),
+        description: '', // Real descriptions will come from backend when available
         memberCount: participant.participantCount || chattingTo.length, // Use API participantCount if available, otherwise calculate from chattingTo
         unreadCount: apiGroup.metadata.totalUnreadMessages || Math.floor(Math.random() * 8),
         hasActivity: Math.random() > 0.5,
@@ -210,20 +210,6 @@ export class GroupsService {
     };
   }
 
-  private generateMockDescription(name: string): string {
-    const descriptions = [
-      'Planning epic weekend adventures, hikes, and outdoor activities. Let\'s make memories!',
-      'Collaborative learning, exam prep, and academic support. Knowledge is power!',
-      'Daily workouts, healthy recipes, and motivation. Stronger together! 💪',
-      'Artists, writers, and creators sharing work, feedback, and inspiration. 🎨✍️',
-      'Weekend warriors conquering challenges and building habits together!',
-      'Tech enthusiasts sharing knowledge, projects, and innovation. 🚀',
-      'Book lovers discussing stories, authors, and literary adventures. 📚',
-      'Music makers sharing beats, lyrics, and creative vibes. 🎵'
-    ];
-
-    return descriptions[Math.floor(Math.random() * descriptions.length)];
-  }
 
   private getRandomTimeAgo(): string {
     const times = ['2h ago', '1d ago', '30m ago', '5h ago', '3d ago', '15m ago'];
