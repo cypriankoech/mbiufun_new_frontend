@@ -199,7 +199,7 @@ export class GroupsService {
       return {
         id: participant.id,
         name: participant.displayName,
-        description: participant.description || '',
+        description: participant.description || '', // Will be empty until backend migration is run
         memberCount: participant.participantCount || chattingTo.length, // Use API participantCount if available, otherwise calculate from chattingTo
         unreadCount: apiGroup.metadata.totalUnreadMessages || Math.floor(Math.random() * 8),
         hasActivity: Math.random() > 0.5,
