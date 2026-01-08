@@ -107,7 +107,6 @@ export interface CreatePostPayload {
     google_place_id: string;
   };
   visibility?: {
-    is_public: boolean;
     bubbles: string[];
     individuals: number[];
     groups: number[];

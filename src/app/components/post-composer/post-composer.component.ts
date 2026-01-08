@@ -119,9 +119,9 @@ interface UploadedPhoto {
             </svg>
             <div class="flex-1">
               <span class="text-gray-600 group-hover:text-[#70AEB9] font-medium">
-                {{ selectedVisibility.is_public ? '👁️ Visible to Everyone' : '👁️ Custom Audience' }}
+                👁️ Custom Audience
               </span>
-              <p *ngIf="!selectedVisibility.is_public" class="text-xs text-gray-500 mt-0.5">
+              <p class="text-xs text-gray-500 mt-0.5">
                 {{ getVisibilityDescription() }}
               </p>
             </div>
@@ -295,8 +295,7 @@ export class PostComposerComponent implements OnInit {
   selectedLocation: { name: string, address: string, latitude: number, longitude: number, google_place_id: string } | null = null;
 
   // Visibility properties
-  selectedVisibility: { is_public: boolean; bubbles: string[]; individuals: number[]; groups: number[] } = {
-    is_public: true,
+  selectedVisibility: { bubbles: string[]; individuals: number[]; groups: number[] } = {
     bubbles: [],
     individuals: [],
     groups: []

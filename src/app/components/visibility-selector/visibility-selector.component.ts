@@ -35,7 +35,6 @@ interface VisibilityGroup {
 }
 
 interface VisibilitySelection {
-  is_public: boolean;
   bubbles: string[];
   individuals: number[];
   groups: number[];
@@ -86,7 +85,7 @@ interface VisibilitySelection {
             <div class="min-w-0 flex-1">
               <span class="text-sm text-gray-600 font-medium block mb-0.5">Audience</span>
               <span class="font-bold text-gray-900 text-base block truncate">
-                {{ isPublic ? '🌍 Everyone' : '👥 ' + recipientCount + ' ' + (recipientCount === 1 ? 'person' : 'people') }}
+                👥 {{ recipientCount }} {{ recipientCount === 1 ? 'person' : 'people' }}
               </span>
             </div>
           </div>
@@ -782,12 +781,11 @@ export class VisibilitySelectorComponent implements OnInit {
 
   confirm(): void {
     const selection: VisibilitySelection = {
-      is_public: this.isPublic,
       bubbles: Array.from(this.selectedBubbleIds),
       individuals: this.selectedIndividuals.map(p => p.id),
       groups: Array.from(this.selectedGroupIds)
     };
-    
+
     this.dialogRef.close(selection);
   }
 
