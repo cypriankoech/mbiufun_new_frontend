@@ -62,7 +62,7 @@ export interface GroupMessage {
 export interface Group {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   memberCount: number;
   unreadCount: number;
   hasActivity: boolean;
@@ -99,7 +99,7 @@ export class GroupsService {
 
   createGroup(groupData: {
     name: string;
-    description: string;
+    description?: string;
     category: string;
     privacy: string;
     participants?: string[];
