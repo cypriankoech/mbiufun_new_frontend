@@ -23,6 +23,9 @@ interface ChatMessage {
   from_me: boolean;
   images?: string[];
   image?: string;
+  // Activity post detection
+  isActivityPost?: boolean;
+  activityPostId?: number;
 }
 
 interface GroupInfo {
@@ -141,7 +144,26 @@ interface UserSearchResult {
               </p>
               
               <!-- Message Text -->
-              <p class="text-sm break-words">{{ message.message }}</p>
+              <div *ngIf="!message.isActivityPost" class="text-sm break-words">{{ message.message }}</div>
+
+              <!-- Activity Post Link -->
+              <div *ngIf="message.isActivityPost" class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-lg">🎯</span>
+                  <span class="font-medium">New Activity</span>
+                </div>
+                <div class="text-sm break-words opacity-80">{{ getActivityMessagePreview(message.message) }}</div>
+                <button
+                  *ngIf="message.activityPostId"
+                  (click)="navigateToActivity(message.activityPostId)"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#70AEB9]/10 to-[#4ECDC4]/10 hover:from-[#70AEB9]/20 hover:to-[#4ECDC4]/20 rounded-lg text-sm font-medium text-[#70AEB9] transition-all duration-200"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  View Full Post
+                </button>
+              </div>
               
               <!-- Images (if any) -->
               <div *ngIf="message.images && message.images.length > 0" class="mt-2 space-y-2">
@@ -485,12 +507,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const headers = this.getHeaders();
     this.http.get<any>(`${environment.apiUrl.replace(/\/$/, '')}/api/v1/chat/thread/${this.groupId}`, { headers }).subscribe({
       next: (response: any) => {
-        this.messages = (response || []).map((msg: any) => ({
-          ...msg,
-          from_me: msg.from_user.id === this.currentUserId,
-          // Ensure date_sent exists and is valid
-          date_sent: msg.date_sent || new Date().toISOString()
-        }));
+        this.messages = (response || []).map((msg: any) => {
+          // Detect activity posts by looking for activity links
+          const activityMatch = msg.message.match(/activity\/(\d+)/);
+          const isActivityPost = !!activityMatch;
+          const activityPostId = activityMatch ? parseInt(activityMatch[1]) : undefined;
+
+          return {
+            ...msg,
+            from_me: msg.from_user.id === this.currentUserId,
+            // Ensure date_sent exists and is valid
+            date_sent: msg.date_sent || new Date().toISOString(),
+            // Activity post detection
+            isActivityPost,
+            activityPostId
+          };
+        });
         this.isLoading = false;
         setTimeout(() => this.scrollToBottom(), 100);
       },
@@ -517,12 +549,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: (response: any) => {
           const previousCount = this.messages.length;
-          this.messages = (response || []).map((msg: any) => ({
-            ...msg,
-            from_me: msg.from_user.id === this.currentUserId,
-            // Ensure date_sent exists and is valid
-            date_sent: msg.date_sent || new Date().toISOString()
-          }));
+          this.messages = (response || []).map((msg: any) => {
+            // Detect activity posts by looking for activity links
+            const activityMatch = msg.message.match(/activity\/(\d+)/);
+            const isActivityPost = !!activityMatch;
+            const activityPostId = activityMatch ? parseInt(activityMatch[1]) : undefined;
+
+            return {
+              ...msg,
+              from_me: msg.from_user.id === this.currentUserId,
+              // Ensure date_sent exists and is valid
+              date_sent: msg.date_sent || new Date().toISOString(),
+              // Activity post detection
+              isActivityPost,
+              activityPostId
+            };
+          });
 
           // Scroll to bottom if new messages arrived
           if (this.messages.length > previousCount) {
@@ -692,6 +734,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   goBack(): void {
     this.router.navigate(['/app/groups']);
+  }
+
+  navigateToActivity(postId: number): void {
+    this.router.navigate(['/app/activity-detail', postId]);
+  }
+
+  getActivityMessagePreview(message: string): string {
+    // Remove the "View full post" link from activity messages
+    return message.replace(/📍 View full post: https:\/\/am\.mbiufun\.com\/app\/activity\/\d+/, '').trim();
   }
 
   formatTime(dateString: string): string {
