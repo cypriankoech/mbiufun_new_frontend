@@ -255,75 +255,6 @@ interface SelectedParticipant {
             </p>
           </div>
 
-          <!-- Privacy Settings -->
-          <div class="space-y-3">
-            <label class="block text-sm font-semibold text-gray-700">
-              Privacy
-            </label>
-            <div class="space-y-2">
-              <button
-                type="button"
-                (click)="selectPrivacy('public')"
-                class="w-full p-4 rounded-xl border-2 transition-all duration-200 text-left"
-                [class.border-gray-200]="groupForm.get('privacy')?.value !== 'public'"
-                [class.bg-white]="groupForm.get('privacy')?.value !== 'public'"
-                [class.border-[#70AEB9]]="groupForm.get('privacy')?.value === 'public'"
-                [class.shadow-lg]="groupForm.get('privacy')?.value === 'public'"
-                [style.background]="groupForm.get('privacy')?.value === 'public' ? 'linear-gradient(135deg, rgba(112, 174, 185, 0.1) 0%, rgba(78, 205, 196, 0.1) 100%)' : ''"
-              >
-                <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#70AEB9] to-[#4ECDC4] flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                      <span class="font-semibold text-gray-900">Public Bubble</span>
-                      <div *ngIf="groupForm.get('privacy')?.value === 'public'" 
-                           class="w-5 h-5 bg-[#4ECDC4] rounded-full flex items-center justify-center">
-                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">Anyone can discover and join your bubble</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                (click)="selectPrivacy('private')"
-                class="w-full p-4 rounded-xl border-2 transition-all duration-200 text-left"
-                [class.border-gray-200]="groupForm.get('privacy')?.value !== 'private'"
-                [class.bg-white]="groupForm.get('privacy')?.value !== 'private'"
-                [class.border-[#70AEB9]]="groupForm.get('privacy')?.value === 'private'"
-                [class.shadow-lg]="groupForm.get('privacy')?.value === 'private'"
-                [style.background]="groupForm.get('privacy')?.value === 'private' ? 'linear-gradient(135deg, rgba(112, 174, 185, 0.1) 0%, rgba(78, 205, 196, 0.1) 100%)' : ''"
-              >
-                <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                      <span class="font-semibold text-gray-900">Private Bubble</span>
-                      <div *ngIf="groupForm.get('privacy')?.value === 'private'" 
-                           class="w-5 h-5 bg-[#4ECDC4] rounded-full flex items-center justify-center">
-                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">Only invited members can join</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
 
           <!-- Loading State -->
           <div *ngIf="isCreating" class="flex flex-col items-center justify-center py-6 gap-3">
@@ -456,7 +387,6 @@ export class CreateGroupDialogComponent {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       description: ['', [Validators.maxLength(500)]],
       category: ['social'],
-      privacy: ['public']
     });
 
     this.searchForm = this.fb.group({
@@ -469,7 +399,6 @@ export class CreateGroupDialogComponent {
         name: data.group.name || '',
         description: data.group.description || '',
         category: 'other', // Default for existing groups
-        privacy: 'public' // Default for existing groups
       });
     }
 
@@ -488,9 +417,6 @@ export class CreateGroupDialogComponent {
     this.groupForm.patchValue({ category });
   }
 
-  selectPrivacy(privacy: string): void {
-    this.groupForm.patchValue({ privacy });
-  }
 
   private searchUsers(query: string) {
     const headers = {
@@ -586,7 +512,6 @@ export class CreateGroupDialogComponent {
         name: this.groupForm.value.name.trim(),
         description: this.groupForm.value.description?.trim() || '',
         category: this.groupForm.value.category,
-        privacy: this.groupForm.value.privacy,
         participants: this.selectedParticipants.filter(p => p.username && p.username.trim()).map(p => p.username.trim()) // Include selected participants with valid usernames
       };
 

@@ -714,34 +714,23 @@ export class VisibilitySelectorComponent implements OnInit {
 
   // Recipient count calculation
   get recipientCount(): number {
-    if (this.isPublic) {
-      return 0; // Everyone
-    }
-    
     // This is an approximation - actual count would need backend calculation
     let count = 0;
-    
+
     // Count from bubbles (rough estimate: assume 10 users per bubble)
     count += this.selectedBubbleIds.size * 10;
-    
+
     // Count individuals
     count += this.selectedIndividuals.length;
-    
+
     // Count from groups
     this.groups.forEach(group => {
       if (this.selectedGroupIds.has(group.id)) {
         count += group.member_count;
       }
     });
-    
-    return count;
-  }
 
-  get isPublic(): boolean {
-    // If all bubbles are selected and nothing else, it's public
-    return this.areAllBubblesSelected() && 
-           this.selectedIndividuals.length === 0 && 
-           this.selectedGroupIds.size === 0;
+    return count;
   }
 
   resetToDefault(): void {
