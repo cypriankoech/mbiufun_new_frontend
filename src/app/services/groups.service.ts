@@ -101,7 +101,6 @@ export class GroupsService {
     name: string;
     description?: string;
     category: string;
-    privacy: string;
     participants?: string[];
   }): Observable<any> {
     const headers = this.getHeaders();
@@ -114,7 +113,6 @@ export class GroupsService {
       displayName: groupData.name,
       description: groupData.description,
       category: groupData.category,
-      is_private: groupData.privacy === 'private',
       chattingTo: (groupData.participants || []).map(username => ({ username })) // Format participants correctly
     };
 
