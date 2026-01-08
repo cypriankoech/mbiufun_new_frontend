@@ -73,9 +73,10 @@ import { Subscription } from 'rxjs';
 
             <!-- Feature Cards Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto mb-16">
-              <div 
+              <div
                 class="group relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer border border-white/60 overflow-hidden"
                 [routerLink]="'/app/daily-dare'"
+                style="display: none;"
               >
                 <div class="absolute inset-0 bg-gradient-to-br from-[#70AEB9]/10 to-[#4ECDC4]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
