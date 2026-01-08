@@ -135,7 +135,6 @@ export class GroupsService {
       displayName: groupData.name,
       description: groupData.description,
       category: 'other', // Default category for updates
-      is_private: false, // Default privacy for updates
       chattingTo: [] // No participant changes during basic info update
     };
 
