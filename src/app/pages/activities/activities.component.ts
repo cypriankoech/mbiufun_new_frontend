@@ -236,7 +236,9 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
       if (params['postId']) {
         this.targetPostId = parseInt(params['postId']);
         // Try to scroll immediately, and also after feed loads
-        setTimeout(() => this.scrollToPost(this.targetPostId), 500);
+        if (this.targetPostId) {
+          setTimeout(() => this.scrollToPost(this.targetPostId!), 500);
+        }
       }
     });
   }
@@ -561,11 +563,13 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   private checkForPostIdScroll(): void {
     if (this.targetPostId) {
       // Small delay to ensure DOM is updated
-      setTimeout(() => this.scrollToPost(this.targetPostId!), 100);
+      setTimeout(() => this.scrollToPost(this.targetPostId), 100);
     }
   }
 
-  private scrollToPost(postId: number): void {
+  private scrollToPost(postId: number | null): void {
+    if (!postId) return;
+
     const postElement = document.querySelector(`[data-post-id="${postId}"]`);
     if (postElement) {
       postElement.scrollIntoView({
