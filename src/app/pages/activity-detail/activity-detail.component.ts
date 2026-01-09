@@ -92,10 +92,10 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
 
   private loadActivityPosts(page: number = 1): void {
     this.loading = true;
-    console.log('🔄 Loading posts - page:', page);
+    console.log('🔄 Loading posts - page:', page, 'activity:', this.currentActivity?.id);
 
-    // For now, load all posts. Later we can filter by activity
-    this.feedService.getUnifiedFeed(page, 20).subscribe({
+    // Filter posts by the current activity
+    this.feedService.getUnifiedFeed(page, 20, undefined, this.currentActivity?.id).subscribe({
       next: (response: UnifiedFeedResponse) => {
         console.log('✅ Posts loaded successfully:', response);
         console.log('📊 Number of posts:', response.results?.length);

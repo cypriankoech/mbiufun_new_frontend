@@ -106,6 +106,7 @@
     <!-- Post Composer - Enhanced Container -->
     <div class="transform transition-all duration-300 hover:scale-[1.01]">
       <app-post-composer
+        [activityId]="currentActivity?.id"
         (postCreated)="onPostCreated()"
       ></app-post-composer>
     </div>
