@@ -13,6 +13,7 @@ import { AuthenticationService } from '@app/services/authentication.service';
     <article
       class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200"
       [attr.aria-label]="'Post by ' + post.author.first_name + ' ' + post.author.last_name"
+      [attr.data-post-id]="post.id"
     >
       <!-- Card Header -->
       <div class="p-4">

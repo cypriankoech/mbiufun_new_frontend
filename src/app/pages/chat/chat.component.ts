@@ -743,7 +743,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   navigateToActivity(postId: number): void {
-    this.router.navigate(['/app/activities']);
+    // Navigate to activities page with post ID to scroll to the specific post
+    this.router.navigate(['/app/activities'], {
+      queryParams: { postId: postId }
+    });
   }
 
   getActivityMessagePreview(message: string): string {

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
@@ -186,11 +186,13 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   private readonly gamesService = inject(GamesService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthenticationService);
   private readonly dialog = inject(MatDialog);
 
   posts: FeedPost[] = [];
   loading = false;
+  targetPostId: number | null = null;
 
   // Vibes related properties
   vibesGames: Game[] = [];
@@ -228,6 +230,15 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     // Listen for online/offline events
     window.addEventListener('online', () => this.handleOnline());
     window.addEventListener('offline', () => this.handleOffline());
+
+    // Check for postId query parameter to scroll to specific post
+    this.route.queryParams.subscribe(params => {
+      if (params['postId']) {
+        this.targetPostId = parseInt(params['postId']);
+        // Try to scroll immediately, and also after feed loads
+        setTimeout(() => this.scrollToPost(this.targetPostId), 500);
+      }
+    });
   }
 
   loadUserInfo(): void {
@@ -271,6 +282,9 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
         // Cache posts for offline access
         this.cachePosts(this.posts);
+
+        // Check if we need to scroll to a specific post
+        this.checkForPostIdScroll();
       },
       error: (error) => {
         console.error('Failed to load feed:', error);
@@ -542,5 +556,35 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     const iconsList = Array.from({ length: 20 }, (_, i) => `${i + 1}.svg`);
     const i = Math.floor(Math.random() * iconsList.length);
     return `assets/games/${iconsList[i]}`;
+  }
+
+  private checkForPostIdScroll(): void {
+    if (this.targetPostId) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => this.scrollToPost(this.targetPostId!), 100);
+    }
+  }
+
+  private scrollToPost(postId: number): void {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (postElement) {
+      postElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      // Add a highlight effect
+      postElement.classList.add('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50');
+      setTimeout(() => {
+        postElement.classList.remove('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50');
+      }, 3000);
+      // Clear the target post ID and URL parameter
+      this.targetPostId = null;
+      this.router.navigate([], {
+        queryParams: { postId: null },
+        queryParamsHandling: 'merge'
+      });
+    } else {
+      console.log(`Post ${postId} not found in current feed, might be on another page`);
+    }
   }
 }

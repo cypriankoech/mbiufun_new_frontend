@@ -152,7 +152,7 @@ export class NotificationsComponent implements OnInit {
       if (link.startsWith('/app/')) {
         // Remove '/app/' prefix and split into segments
         const routePath = link.substring(5); // Remove '/app/'
-        const segments = routePath.split('/').filter(segment => segment); // Split and filter empty strings
+        const segments = routePath.split('/').filter((segment: string) => segment); // Split and filter empty strings
 
         // Handle parameterized routes
         if (segments[0] === 'activity-detail' && segments[1]) {
