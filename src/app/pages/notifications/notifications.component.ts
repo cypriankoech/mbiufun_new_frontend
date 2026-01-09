@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '@environments/environment';
 
 @Component({
   selector: 'app-notifications',
@@ -74,8 +76,8 @@ import { Subscription } from 'rxjs';
                         [class.font-bold]="!notification.read">
                       {{ notification.title }}
                     </h3>
-                    <p class="text-gray-600 text-sm mb-2">{{ notification.message }}</p>
-                    <p class="text-gray-500 text-xs">{{ notification.timestamp }}</p>
+                    <p class="text-gray-600 text-sm mb-2">{{ notification.description }}</p>
+                    <p class="text-gray-500 text-xs">{{ notification.ago }}</p>
                   </div>
                 </div>
                 <div class="flex-shrink-0 ml-4">
@@ -92,57 +94,59 @@ import { Subscription } from 'rxjs';
 })
 export class NotificationsComponent implements OnInit {
   private readonly router = inject(Router);
-  
+  private readonly http = inject(HttpClient);
+
   notifications: any[] = [];
   isLoading = true;
   private subscriptions: Subscription[] = [];
 
   async ngOnInit(): Promise<void> {
-    // TODO: Add analytics logging
-    // await this.analytics.logEvent('page_view', {"component": "NotificationsComponent"});
-    
-    // TODO: Implement notifications service
-    setTimeout(() => {
-      this.notifications = [
-        {
-          id: 1,
-          title: 'New Daily Dare Available',
-          message: 'A new challenge is waiting for you!',
-          type: 'info',
-          read: false,
-          timestamp: '2 minutes ago'
-        },
-        {
-          id: 2,
-          title: 'Friend Request Accepted',
-          message: 'John Doe accepted your friend request',
-          type: 'success',
-          read: false,
-          timestamp: '1 hour ago'
-        },
-        {
-          id: 3,
-          title: 'Group Activity Update',
-          message: 'Weekend Warriors group has a new activity planned',
-          type: 'info',
-          read: true,
-          timestamp: '3 hours ago'
-        }
-      ];
-      this.isLoading = false;
-    }, 1000);
+    this.loadNotifications();
+  }
+
+  private getHeaders() {
+    const token = localStorage.getItem('mbiu-token');
+    return {
+      'Content-Type': 'application/json',
+      'mbiu-token': token || ''
+    };
+  }
+
+  loadNotifications(): void {
+    const headers = this.getHeaders();
+    this.http.get<any>(`${environment.apiUrl.replace(/\/$/, '')}/api/v1/notifications/`, { headers }).subscribe({
+      next: (response) => {
+        this.notifications = response.data || [];
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Failed to load notifications:', error);
+        this.notifications = [];
+        this.isLoading = false;
+      }
+    });
   }
 
   markAllAsRead(): void {
-    this.notifications = this.notifications.map(n => ({ ...n, read: true }));
-    // TODO: Update on server
+    const headers = this.getHeaders();
+    this.http.get<any>(`${environment.apiUrl.replace(/\/$/, '')}/api/v1/notifications/?mark_read=true`, { headers }).subscribe({
+      next: () => {
+        this.notifications = this.notifications.map(n => ({ ...n, read: true }));
+      },
+      error: (error) => {
+        console.error('Failed to mark all as read:', error);
+      }
+    });
   }
 
   openNotification(notification: any): void {
-    // Mark as read
+    // Mark as read locally
     notification.read = true;
-    // TODO: Navigate to relevant page or show details
-    console.log('Opening notification:', notification);
+
+    // Navigate to the link if available
+    if (notification.link) {
+      this.router.navigate([notification.link]);
+    }
   }
 
   getNotificationIcon(type: string): string {
