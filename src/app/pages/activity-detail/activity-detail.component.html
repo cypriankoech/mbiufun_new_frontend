@@ -162,6 +162,7 @@
       >
         <app-feed-card
           [post]="post"
+          [hideActivityBadge]="true"
           (comment)="onComment($event)"
           (delete)="onDelete($event)"
         ></app-feed-card>

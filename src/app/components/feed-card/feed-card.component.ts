@@ -88,7 +88,7 @@ import { AuthenticationService } from '@app/services/authentication.service';
               <span class="text-gray-300">•</span>
               <!-- Activity Badge -->
               <span
-                *ngIf="post.activity"
+                *ngIf="post.activity && !hideActivityBadge"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#70AEB9]/10 text-[#70AEB9] text-xs font-medium"
               >
                 🎯 {{ post.activity.name }}
@@ -282,6 +282,7 @@ export class FeedCardComponent implements OnInit {
   private readonly authService = inject(AuthenticationService);
 
   @Input({ required: true }) post!: FeedPost;
+  @Input() hideActivityBadge = false;
   @Output() comment = new EventEmitter<number>();
   @Output() delete = new EventEmitter<number>();
 
