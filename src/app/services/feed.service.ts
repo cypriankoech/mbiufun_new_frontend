@@ -294,6 +294,10 @@ export class FeedService {
       if (payload.hobby_id !== null && payload.hobby_id !== undefined) {
         formData.append('hobby_id', payload.hobby_id.toString());
       }
+      if (payload.activity_id !== null && payload.activity_id !== undefined) {
+        formData.append('activity_id', payload.activity_id.toString());
+        console.log('🎯 Appending activity_id to FormData:', payload.activity_id);
+      }
       // Send location as JSON string if present
       if (payload.location) {
         formData.append('location', JSON.stringify(payload.location));
