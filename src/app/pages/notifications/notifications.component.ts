@@ -145,7 +145,29 @@ export class NotificationsComponent implements OnInit {
 
     // Navigate to the link if available
     if (notification.link) {
-      this.router.navigate([notification.link]);
+      // Parse the link - backend sends full paths like '/app/activity-detail/123'
+      // but we need to navigate using Angular router segments
+      const link = notification.link;
+
+      if (link.startsWith('/app/')) {
+        // Remove '/app/' prefix and split into segments
+        const routePath = link.substring(5); // Remove '/app/'
+        const segments = routePath.split('/').filter(segment => segment); // Split and filter empty strings
+
+        // Handle parameterized routes
+        if (segments[0] === 'activity-detail' && segments[1]) {
+          this.router.navigate(['activity-detail', segments[1]]);
+        } else if (segments[0] === 'activities') {
+          this.router.navigate(['activities']);
+        } else {
+          // Fallback - try navigating to the segments
+          this.router.navigate(segments);
+        }
+      } else {
+        // Fallback for unexpected link formats
+        console.warn('Unexpected notification link format:', link);
+        this.router.navigate([link]);
+      }
     }
   }
 
