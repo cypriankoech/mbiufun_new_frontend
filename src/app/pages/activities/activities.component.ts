@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { HttpHeaders } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
 import { FeedService, FeedPost, UnifiedFeedResponse } from '@app/services/feed.service';
@@ -284,9 +285,6 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
         // Check if we need to scroll to a specific post
         this.checkForPostIdScroll();
-        if (this.targetPostId) {
-          this.tryScrollToTargetPost();
-        }
       },
       error: (error) => {
         console.error('Failed to load feed:', error);
