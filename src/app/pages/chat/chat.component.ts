@@ -743,7 +743,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   navigateToActivity(postId: number): void {
-    this.router.navigate(['/app/activity-detail', postId]);
+    this.router.navigate(['/app/activities']);
   }
 
   getActivityMessagePreview(message: string): string {
