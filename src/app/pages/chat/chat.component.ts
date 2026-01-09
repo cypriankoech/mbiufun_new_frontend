@@ -162,7 +162,7 @@ interface UserSearchResult {
                 <button
                   *ngIf="message.activityPostId"
                   (click)="navigateToActivity(message.activityPostId)"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#70AEB9]/20 to-[#4ECDC4]/20 hover:from-[#70AEB9]/40 hover:to-[#4ECDC4]/40 border border-[#70AEB9]/30 hover:border-[#70AEB9]/50 rounded-lg text-sm font-medium text-[#70AEB9] hover:text-[#5a9aa3] transition-all duration-200"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 border border-blue-600 hover:border-blue-700 rounded-lg text-sm font-medium text-white transition-all duration-200"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
