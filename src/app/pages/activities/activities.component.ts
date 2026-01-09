@@ -579,6 +579,8 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     const existingPost = this.posts.find(p => p.id === postId);
     if (existingPost && (existingPost as any).activity) {
       const activity = (existingPost as any).activity;
+      // Store the activity data in sessionStorage for the detail page
+      sessionStorage.setItem('selectedActivity', JSON.stringify(activity));
       this.router.navigate(['/app/activity-detail', activity.id], {
         queryParams: { postId: postId }
       });
@@ -591,6 +593,8 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
         const post = response.results.find(p => p.id === postId);
         if (post && (post as any).activity) {
           const activity = (post as any).activity;
+          // Store the activity data in sessionStorage for the detail page
+          sessionStorage.setItem('selectedActivity', JSON.stringify(activity));
           this.router.navigate(['/app/activity-detail', activity.id], {
             queryParams: { postId: postId }
           });
