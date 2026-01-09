@@ -140,6 +140,7 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
   }
 
   onPostCreated(): void {
+    console.log('📝 Post created on activity page, currentActivity:', this.currentActivity);
     this.loadActivityPosts(1);
   }
 

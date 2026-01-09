@@ -635,6 +635,9 @@ export class PostComposerComponent implements OnInit {
     // Add activity_id if provided (for activity-specific posts)
     if (this.activityId) {
       postPayload.activity_id = this.activityId;
+      console.log('🎯 Adding activity_id to payload:', this.activityId);
+    } else {
+      console.log('⚠️ No activityId provided to post composer');
     }
     
     console.log('📍 Creating post with payload:', postPayload);
