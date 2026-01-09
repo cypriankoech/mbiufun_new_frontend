@@ -152,7 +152,13 @@ interface UserSearchResult {
                   <span class="text-lg">🎯</span>
                   <span class="font-medium">New Activity</span>
                 </div>
-                <div class="text-sm break-words opacity-80">{{ getActivityMessagePreview(message.message) }}</div>
+                <div
+                  *ngIf="message.activityPostId"
+                  class="text-sm break-words opacity-80 hover:opacity-100 cursor-pointer underline text-[#70AEB9] hover:text-[#5a9aa3] transition-all duration-200"
+                  (click)="navigateToActivity(message.activityPostId)"
+                >
+                  {{ getActivityMessagePreview(message.message) }}
+                </div>
                 <button
                   *ngIf="message.activityPostId"
                   (click)="navigateToActivity(message.activityPostId)"
