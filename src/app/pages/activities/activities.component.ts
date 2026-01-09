@@ -57,19 +57,35 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
           </button>
         </div>
 
-        <!-- Search Chip -->
-        <div *ngIf="isVibesSearching" class="mb-4 flex items-center gap-2">
-          <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#70AEB9]/10 text-[#70AEB9] text-sm font-medium">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-            </svg>
-            {{ vibesSearchText }}
-            <button (click)="clearVibesSearch()" class="ml-2 text-[#70AEB9] hover:text-[#5d96a1] focus:outline-none">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <!-- Filters Row -->
+        <div class="mb-4 flex flex-col sm:flex-row gap-3">
+          <!-- Search Chip -->
+          <div *ngIf="isVibesSearching" class="flex items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#70AEB9]/10 text-[#70AEB9] text-sm font-medium">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
               </svg>
-            </button>
-          </span>
+              {{ vibesSearchText }}
+              <button (click)="clearVibesSearch()" class="ml-2 text-[#70AEB9] hover:text-[#5d96a1] focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          </div>
+
+          <!-- Activity Filter -->
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-700">Filter by Activity:</label>
+            <select
+              [(ngModel)]="selectedActivityFilter"
+              (ngModelChange)="onActivityFilterChange($event)"
+              class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#70AEB9] focus:border-transparent"
+            >
+              <option [value]="null">All Activities</option>
+              <option *ngFor="let game of allGames" [value]="game.id">{{ game.name }}</option>
+            </select>
+          </div>
         </div>
 
         <!-- Games Grid -->
@@ -178,6 +194,10 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   isOffline = false;
   hasNewPosts = false;
 
+  // Activity filtering
+  allGames: Game[] = [];
+  selectedActivityFilter: number | null = null;
+
   // User info for header
   currentUserId: number = 0;
   currentUserAvatar: string = '';
@@ -195,6 +215,7 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     // Load vibes data
     this.loadVibesGames();
     this.loadSelectedVibes();
+    this.loadAllGames();
 
     // Listen for online/offline events
     window.addEventListener('online', () => this.handleOnline());
@@ -226,7 +247,7 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   loadFeed(page: number = 1): void {
     this.loading = true;
     
-    this.feedService.getUnifiedFeed(page, 20).subscribe({
+    this.feedService.getUnifiedFeed(page, 20, undefined, this.selectedActivityFilter || undefined).subscribe({
       next: (response: UnifiedFeedResponse) => {
         if (page === 1) {
           this.posts = response.results;
@@ -403,6 +424,17 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadAllGames(): void {
+    this.gamesService.getGames().subscribe({
+      next: (games) => {
+        this.allGames = games;
+      },
+      error: (error) => {
+        console.error('Failed to load all games:', error);
+      }
+    });
+  }
+
   loadSelectedVibes(): void {
     // Fetch fresh user data from API to ensure we have complete vibe information
     this.authService.getUserProfile().subscribe({
@@ -441,6 +473,11 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
   clearVibesSearch(): void {
     this.vibesSearchText = '';
+  }
+
+  onActivityFilterChange(activityId: number | null): void {
+    this.selectedActivityFilter = activityId;
+    this.loadFeed(1); // Reload feed with new filter
   }
 
   goToActivityDetail(game: Game) {

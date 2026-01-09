@@ -45,6 +45,11 @@ interface BackendPost {
     id: string;
     name: string;
   }[];
+  activity?: {
+    id: number;
+    name: string;
+    game_type?: string;
+  };
 }
 
 // Frontend interface
@@ -86,6 +91,11 @@ export interface FeedPost {
     id: string;
     name: string;
   }[];
+  activity?: {
+    id: number;
+    name: string;
+    game_type?: string;
+  };
 }
 
 export interface UnifiedFeedResponse {
@@ -98,6 +108,7 @@ export interface UnifiedFeedResponse {
 export interface CreatePostPayload {
   caption: string;
   hobby_id?: number;
+  activity_id?: number;
   images?: File[]; // TODO: Backend currently only supports single image
   location?: {
     name: string;
@@ -133,7 +144,7 @@ export class FeedService {
   /**
    * Fetch unified feed (hobby posts + friend posts)
    */
-  getUnifiedFeed(page: number = 1, perPage: number = 20, hobbyFilter?: number): Observable<UnifiedFeedResponse> {
+  getUnifiedFeed(page: number = 1, perPage: number = 20, hobbyFilter?: number, activityFilter?: number): Observable<UnifiedFeedResponse> {
     const token = this.authService.getToken();
     let params = new HttpParams()
       .set('page', page.toString())
@@ -144,6 +155,11 @@ export class FeedService {
       console.log('🔍 Filtering feed by hobby_id:', hobbyFilter);
     } else {
       console.log('🔍 Loading all hobbies (no filter)');
+    }
+
+    if (activityFilter !== undefined && activityFilter !== null) {
+      params = params.set('activity_id', activityFilter.toString());
+      console.log('🎯 Filtering feed by activity_id:', activityFilter);
     }
 
     const fullUrl = `${this.baseUrl}posts/unified_feed/?${params.toString()}`;
@@ -230,6 +246,7 @@ export class FeedService {
       post_type: backendPost.post_type,
       event_details: backendPost.event_details,
       bubble_tags: backendPost.bubble_tags,
+      activity: backendPost.activity,
     };
   }
 
