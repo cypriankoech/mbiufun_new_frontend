@@ -95,7 +95,7 @@ import { environment } from '@environments/environment';
 export class NotificationsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
-
+  
   notifications: any[] = [];
   isLoading = true;
   private subscriptions: Subscription[] = [];
@@ -122,7 +122,7 @@ export class NotificationsComponent implements OnInit {
       error: (error) => {
         console.error('Failed to load notifications:', error);
         this.notifications = [];
-        this.isLoading = false;
+      this.isLoading = false;
       }
     });
   }
@@ -131,7 +131,7 @@ export class NotificationsComponent implements OnInit {
     const headers = this.getHeaders();
     this.http.get<any>(`${environment.apiUrl.replace(/\/$/, '')}/api/v1/notifications/?mark_read=true`, { headers }).subscribe({
       next: () => {
-        this.notifications = this.notifications.map(n => ({ ...n, read: true }));
+    this.notifications = this.notifications.map(n => ({ ...n, read: true }));
       },
       error: (error) => {
         console.error('Failed to mark all as read:', error);

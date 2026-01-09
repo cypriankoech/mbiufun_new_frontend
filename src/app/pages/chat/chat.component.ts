@@ -520,9 +520,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           const activityPostId = activityMatch ? parseInt(activityMatch[1]) : undefined;
 
           return {
-            ...msg,
-            from_me: msg.from_user.id === this.currentUserId,
-            // Ensure date_sent exists and is valid
+          ...msg,
+          from_me: msg.from_user.id === this.currentUserId,
+          // Ensure date_sent exists and is valid
             date_sent: msg.date_sent || new Date().toISOString(),
             // Activity post detection
             isActivityPost,
@@ -562,9 +562,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             const activityPostId = activityMatch ? parseInt(activityMatch[1]) : undefined;
 
             return {
-              ...msg,
-              from_me: msg.from_user.id === this.currentUserId,
-              // Ensure date_sent exists and is valid
+            ...msg,
+            from_me: msg.from_user.id === this.currentUserId,
+            // Ensure date_sent exists and is valid
               date_sent: msg.date_sent || new Date().toISOString(),
               // Activity post detection
               isActivityPost,

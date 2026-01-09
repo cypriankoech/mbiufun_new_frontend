@@ -60,19 +60,19 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
 
         <!-- Filters Row -->
         <div class="mb-4 flex flex-col sm:flex-row gap-3">
-          <!-- Search Chip -->
+        <!-- Search Chip -->
           <div *ngIf="isVibesSearching" class="flex items-center gap-2">
-            <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#70AEB9]/10 text-[#70AEB9] text-sm font-medium">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#70AEB9]/10 text-[#70AEB9] text-sm font-medium">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
+            {{ vibesSearchText }}
+            <button (click)="clearVibesSearch()" class="ml-2 text-[#70AEB9] hover:text-[#5d96a1] focus:outline-none">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              {{ vibesSearchText }}
-              <button (click)="clearVibesSearch()" class="ml-2 text-[#70AEB9] hover:text-[#5d96a1] focus:outline-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
+            </button>
+          </span>
           </div>
 
           <!-- Activity Filter -->

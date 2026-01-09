@@ -414,9 +414,15 @@ export class PostComposerComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
+      console.log('🔍 Visibility selector dialog closed with result:', result);
       if (result) {
         this.selectedVisibility = result;
         console.log('👁️ Visibility selected:', result);
+        console.log('📊 Selected bubbles count:', result.bubbles?.length || 0);
+        console.log('📊 Selected individuals count:', result.individuals?.length || 0);
+        console.log('📊 Selected groups count:', result.groups?.length || 0);
+      } else {
+        console.log('⚠️ No visibility result received from dialog');
       }
     });
   }

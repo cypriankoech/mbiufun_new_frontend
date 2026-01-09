@@ -304,7 +304,12 @@ export class FeedService {
       }
       // Send visibility as JSON string if present
       if (payload.visibility) {
-        formData.append('visibility', JSON.stringify(payload.visibility));
+        const visibilityJson = JSON.stringify(payload.visibility);
+        console.log('🎯 Sending visibility to backend:', payload.visibility);
+        console.log('📄 Visibility JSON:', visibilityJson);
+        formData.append('visibility', visibilityJson);
+      } else {
+        console.log('⚠️ No visibility data to send');
       }
       // Send multiple images with indexed names
       payload.images.forEach((image, index) => {

@@ -544,11 +544,19 @@ export class VisibilitySelectorComponent implements OnInit {
   activeGroupMenu: number | null = null;
 
   ngOnInit(): void {
+    console.log('🎯 Visibility selector initialized');
+
+    // Reset state to ensure clean slate
+    this.selectedBubbleIds.clear();
+    this.selectedIndividuals = [];
+    this.selectedGroupIds.clear();
+    this.bubbles = [];
+    this.groups = [];
+    this.loadingBubbles = true;
+    this.loadingGroups = true;
+
     this.loadBubbles();
     this.loadGroups();
-    
-    // Default: All bubbles selected (this is the key default behavior!)
-    this.selectAllBubblesOnLoad();
     
     // Set up debounced search for individuals
     this.setupIndividualSearch();
@@ -601,11 +609,28 @@ export class VisibilitySelectorComponent implements OnInit {
             memberCount: group.participant?.participantCount || group.participant?.chattingTo?.length || 0
           }));
           console.log('📦 Loaded bubbles:', this.bubbles);
+          console.log('🔢 Bubble count:', this.bubbles.length);
+
+          // Only select all if we actually have bubbles loaded
+          if (this.bubbles.length > 0) {
           this.selectAllBubblesOnLoad();
+            console.log('✅ Selected all bubbles by default');
+          } else {
+            console.warn('⚠️ No bubbles loaded, cannot select default');
+          }
+
           this.loadingBubbles = false;
         },
         error: (error) => {
-          console.error('Error loading bubbles:', error);
+          console.error('❌ Error loading bubbles:', error);
+          console.error('❌ Error details:', error.message);
+
+          // Try to retry once after a short delay
+          setTimeout(() => {
+            console.log('🔄 Retrying bubble load...');
+            this.loadBubbles();
+          }, 2000);
+
           this.loadingBubbles = false;
         }
       });
@@ -716,20 +741,20 @@ export class VisibilitySelectorComponent implements OnInit {
   get recipientCount(): number {
     // This is an approximation - actual count would need backend calculation
     let count = 0;
-
+    
     // Count from bubbles (rough estimate: assume 10 users per bubble)
     count += this.selectedBubbleIds.size * 10;
-
+    
     // Count individuals
     count += this.selectedIndividuals.length;
-
+    
     // Count from groups
     this.groups.forEach(group => {
       if (this.selectedGroupIds.has(group.id)) {
         count += group.member_count;
       }
     });
-
+    
     return count;
   }
 
@@ -775,6 +800,12 @@ export class VisibilitySelectorComponent implements OnInit {
       groups: Array.from(this.selectedGroupIds)
     };
 
+    console.log('✅ Visibility selector confirm called');
+    console.log('📊 Selected bubbles:', selection.bubbles);
+    console.log('👥 Selected individuals:', selection.individuals);
+    console.log('👥 Selected groups:', selection.groups);
+    console.log('📈 Total recipient count:', this.recipientCount);
+    
     this.dialogRef.close(selection);
   }
 

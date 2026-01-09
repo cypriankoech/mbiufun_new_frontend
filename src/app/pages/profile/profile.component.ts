@@ -32,10 +32,43 @@ export class ProfileComponent implements OnInit {
     
     this.isOwnProfile = userId === currentUser?.id?.toString();
     
-    setTimeout(() => {
-      this.user = this.isOwnProfile ? currentUser : null;
+    if (this.isOwnProfile) {
+      // Fetch fresh user data from API instead of using cached data
+      this.loadCurrentUserProfile();
+    } else {
+      // For other users, we'd need to implement user profile fetching by ID
+      this.user = null;
       this.isLoading = false;
-    }, 500);
+    }
+  }
+
+  private loadCurrentUserProfile(): void {
+    const token = this.authService.getToken();
+    if (!token) {
+      console.error('No auth token available');
+      this.isLoading = false;
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'mbiu-token': token
+    });
+
+    this.http.get(`${environment.apiUrl}api/v1/user/me/`, { headers })
+      .subscribe({
+        next: (response: any) => {
+          console.log('✅ Fresh user profile loaded:', response);
+          this.user = response;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('❌ Failed to load user profile:', error);
+          // Fallback to cached data if API fails
+          this.user = this.authService.currentUserValue;
+          this.isLoading = false;
+        }
+      });
   }
 
   parseHobbies(hobbies: string): string[] {
@@ -44,23 +77,35 @@ export class ProfileComponent implements OnInit {
   }
 
   getReferralUrl(): string {
-    // Generate referral code if not present
-    const code = this.user?.referral_code || this.user?.get_referral_code?.() || this.generateReferralCode();
+    // Use referral_code from fresh API data, fallback to generating from user ID
+    const code = this.user?.referral_code || (this.user?.id ? this.generateReferralCode() : '');
     return `https://mbiufun.com/register?ref=${code}`;
   }
 
-  generateReferralCode(): string {
-    // Generate client-side referral code as fallback
+  private generateReferralCode(): string {
+    // Client-side fallback to generate referral code from user ID
     if (!this.user?.id) return '';
     const prefixedId = `mbiu_${this.user.id}`;
+    try {
+      // Simple base64 encoding (without padding for consistency with backend)
     return btoa(prefixedId).replace(/=/g, '');
+    } catch (e) {
+      console.error('Failed to generate referral code:', e);
+      return '';
+    }
+  }
+
+  getReferralCode(): string {
+    return this.user?.referral_code || (this.user?.id ? this.generateReferralCode() : 'N/A');
   }
 
   copyReferralCode(): void {
-    const code = this.user?.referral_code || this.generateReferralCode();
-    if (code) {
+    const code = this.getReferralCode();
+    if (code && code !== 'N/A') {
       navigator.clipboard.writeText(code);
       alert('Referral code copied!');
+    } else {
+      alert('Referral code not available');
     }
   }
 
