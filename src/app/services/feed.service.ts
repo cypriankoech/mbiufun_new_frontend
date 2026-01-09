@@ -144,7 +144,7 @@ export class FeedService {
   /**
    * Fetch unified feed (hobby posts + friend posts)
    */
-  getUnifiedFeed(page: number = 1, perPage: number = 20, hobbyFilter?: number, activityFilter?: number): Observable<UnifiedFeedResponse> {
+  getUnifiedFeed(page: number = 1, perPage: number = 20, hobbyFilter?: number, activityFilter?: number | 'all'): Observable<UnifiedFeedResponse> {
     const token = this.authService.getToken();
     let params = new HttpParams()
       .set('page', page.toString())
