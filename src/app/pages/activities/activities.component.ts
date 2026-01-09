@@ -255,7 +255,9 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   loadFeed(page: number = 1): void {
     this.loading = true;
     
-    this.feedService.getUnifiedFeed(page, 20, undefined, this.selectedActivityFilter || undefined).subscribe({
+    // Convert null to 'all' for "All Activities" option
+    const activityParam = this.selectedActivityFilter === null ? 'all' : this.selectedActivityFilter;
+    this.feedService.getUnifiedFeed(page, 20, undefined, activityParam).subscribe({
       next: (response: UnifiedFeedResponse) => {
         if (page === 1) {
           this.posts = response.results;
