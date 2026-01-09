@@ -140,6 +140,14 @@ import { UpdateVibesDialogComponent } from '@app/components/update-vibes-dialog.
             <span>Select Activities</span>
           </button>
         </div>
+
+        <!-- Post Composer -->
+        <div *ngIf="selectedActivityFilter" class="mt-6">
+          <app-post-composer
+            [activityId]="selectedActivityFilter"
+            (postCreated)="onPostCreated()">
+          </app-post-composer>
+        </div>
       </div>
     </div>
   `,
@@ -478,6 +486,11 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   onActivityFilterChange(activityId: number | null): void {
     this.selectedActivityFilter = activityId;
     this.loadFeed(1); // Reload feed with new filter
+  }
+
+  onPostCreated(): void {
+    // Reload the feed to show the new post
+    this.loadFeed(1);
   }
 
   goToActivityDetail(game: Game) {

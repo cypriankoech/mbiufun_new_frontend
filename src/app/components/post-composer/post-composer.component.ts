@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -276,6 +276,7 @@ export class PostComposerComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
 
+  @Input() activityId: number | null = null;
   @Output() postCreated = new EventEmitter<void>();
 
   isExpanded = false;
@@ -624,12 +625,17 @@ export class PostComposerComponent implements OnInit {
 
     // Submit post to backend
 
-    const postPayload = {
+    const postPayload: any = {
       caption: this.caption,
       images: this.uploadedPhotos.length > 0 ? this.uploadedPhotos.map(p => p.file) : undefined,
       location: this.selectedLocation || undefined,
       visibility: this.selectedVisibility
     };
+
+    // Add activity_id if provided (for activity-specific posts)
+    if (this.activityId) {
+      postPayload.activity_id = this.activityId;
+    }
     
     console.log('📍 Creating post with payload:', postPayload);
     console.log('📍 Selected location:', this.selectedLocation);
