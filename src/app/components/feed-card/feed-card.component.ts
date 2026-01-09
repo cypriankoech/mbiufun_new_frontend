@@ -87,7 +87,14 @@ import { AuthenticationService } from '@app/services/authentication.service';
               <span class="text-gray-300">•</span>
               <!-- Activity Badge -->
               <span
-                *ngIf="post.hobby"
+                *ngIf="post.activity"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#70AEB9]/10 text-[#70AEB9] text-xs font-medium"
+              >
+                🎯 {{ post.activity.name }}
+              </span>
+              <!-- Hobby Badge (legacy) -->
+              <span
+                *ngIf="post.hobby && !post.activity"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium"
               >
                 {{ post.hobby.name }}
