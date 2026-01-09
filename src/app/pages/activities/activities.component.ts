@@ -321,10 +321,6 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     }
   }
 
-  onPostCreated(): void {
-    this.loadFeed(1);
-  }
-
   onComment(postId: number): void {
     // TODO: Open comment dialog or navigate to detail view
     console.log('Comment on post:', postId);
