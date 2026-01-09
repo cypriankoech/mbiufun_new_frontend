@@ -231,14 +231,11 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     window.addEventListener('online', () => this.handleOnline());
     window.addEventListener('offline', () => this.handleOffline());
 
-    // Check for postId query parameter to scroll to specific post
+    // Check for postId query parameter - redirect to activity detail page
     this.route.queryParams.subscribe(params => {
       if (params['postId']) {
-        this.targetPostId = parseInt(params['postId']);
-        // Try to scroll immediately, and also after feed loads
-        if (this.targetPostId) {
-          setTimeout(() => this.scrollToPost(this.targetPostId!), 500);
-        }
+        const postId = parseInt(params['postId']);
+        this.redirectToActivityDetail(postId);
       }
     });
   }
@@ -287,6 +284,9 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
         // Check if we need to scroll to a specific post
         this.checkForPostIdScroll();
+        if (this.targetPostId) {
+          this.tryScrollToTargetPost();
+        }
       },
       error: (error) => {
         console.error('Failed to load feed:', error);
@@ -567,17 +567,66 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     }
   }
 
-  private scrollToPost(postId: number | null): void {
-    if (!postId) return;
+  private redirectToActivityDetail(postId: number): void {
+    // Fetch the specific post to get its activity ID
+    const token = this.authService.getToken();
+    if (!token) return;
 
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    const headers = new HttpHeaders({
+      'mbiu-token': token,
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Try to get the post from current feed first
+    const existingPost = this.posts.find(p => p.id === postId);
+    if (existingPost && (existingPost as any).activity) {
+      const activity = (existingPost as any).activity;
+      this.router.navigate(['/app/activity-detail', activity.id], {
+        queryParams: { postId: postId }
+      });
+      return;
+    }
+
+    // If not in current feed, fetch a larger set of posts to find it
+    this.feedService.getUnifiedFeed(1, 100).subscribe({
+      next: (response) => {
+        const post = response.results.find(p => p.id === postId);
+        if (post && (post as any).activity) {
+          const activity = (post as any).activity;
+          this.router.navigate(['/app/activity-detail', activity.id], {
+            queryParams: { postId: postId }
+          });
+        } else {
+          console.log(`Post ${postId} not found or has no activity - staying on activities page`);
+          // Clear the postId parameter but stay on activities page
+          this.router.navigate([], {
+            queryParams: { postId: null },
+            queryParamsHandling: 'merge'
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching post details:', error);
+        // Clear the postId parameter on error
+        this.router.navigate([], {
+          queryParams: { postId: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+    });
+  }
+
+  private scrollToPost(postId: number | null): boolean {
+    if (!postId) return false;
+
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`) as HTMLElement;
     if (postElement) {
       postElement.scrollIntoView({
         behavior: 'smooth',
         block: 'center'
       });
       // Add a highlight effect
-      postElement.classList.add('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50');
+      postElement.classList.add('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50', 'transition-all', 'duration-300');
       setTimeout(() => {
         postElement.classList.remove('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50');
       }, 3000);
@@ -587,8 +636,10 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
         queryParams: { postId: null },
         queryParamsHandling: 'merge'
       });
+      return true;
     } else {
       console.log(`Post ${postId} not found in current feed, might be on another page`);
+      return false;
     }
   }
 }

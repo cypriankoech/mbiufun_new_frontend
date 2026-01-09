@@ -31,6 +31,7 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
   currentPage = 1;
   isOffline = false;
   hasNewPosts = false;
+  targetPostId: number | null = null;
 
   private subscriptions: Subscription[] = [];
 
@@ -42,6 +43,14 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
     // Listen for online/offline events
     window.addEventListener('online', () => this.handleOnline());
     window.addEventListener('offline', () => this.handleOffline());
+
+    // Check for postId query parameter to scroll to specific post
+    this.route.queryParams.subscribe(params => {
+      if (params['postId']) {
+        this.targetPostId = parseInt(params['postId']);
+        this.tryScrollToTargetPost();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -110,6 +119,11 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
         this.loading = false;
         
         console.log('📝 Total posts in component:', this.posts.length);
+
+        // Check if we need to scroll to a specific post
+        if (this.targetPostId) {
+          this.tryScrollToTargetPost();
+        }
       },
       error: (error) => {
         console.error('❌ Failed to load posts:', error);
@@ -217,5 +231,52 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
 
   trackByPostId(index: number, post: FeedPost): number {
     return post.id;
+  }
+
+  private tryScrollToTargetPost(): void {
+    if (!this.targetPostId) return;
+
+    let attempts = 0;
+    const maxAttempts = 10;
+    const attemptScroll = () => {
+      attempts++;
+      const success = this.scrollToPost(this.targetPostId);
+      if (!success && attempts < maxAttempts) {
+        // Try again in 500ms
+        setTimeout(attemptScroll, 500);
+      } else if (!success) {
+        console.log(`Could not find post ${this.targetPostId} after ${maxAttempts} attempts`);
+      }
+    };
+
+    // Start trying immediately, then retry if needed
+    attemptScroll();
+  }
+
+  private scrollToPost(postId: number | null): boolean {
+    if (!postId) return false;
+
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`) as HTMLElement;
+    if (postElement) {
+      postElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      // Add a highlight effect
+      postElement.classList.add('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50', 'transition-all', 'duration-300');
+      setTimeout(() => {
+        postElement.classList.remove('ring-4', 'ring-[#70AEB9]', 'ring-opacity-50');
+      }, 3000);
+      // Clear the target post ID and URL parameter
+      this.targetPostId = null;
+      this.router.navigate([], {
+        queryParams: { postId: null },
+        queryParamsHandling: 'merge'
+      });
+      return true;
+    } else {
+      console.log(`Post ${postId} not found in current activity`);
+      return false;
+    }
   }
 }
