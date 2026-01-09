@@ -154,7 +154,7 @@ interface UserSearchResult {
                 </div>
                 <div
                   *ngIf="message.activityPostId"
-                  class="text-sm break-words opacity-80 hover:opacity-100 cursor-pointer underline text-[#70AEB9] hover:text-[#5a9aa3] transition-all duration-200"
+                  class="text-sm break-words cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 transition-colors duration-200"
                   (click)="navigateToActivity(message.activityPostId)"
                 >
                   {{ getActivityMessagePreview(message.message) }}
