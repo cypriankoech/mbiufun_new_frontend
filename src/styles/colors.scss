@@ -1,0 +1,18 @@
+$primary: #70AEB9;
+$disabled: gray;
+$white: #FFF;
+$black: #000;
+
+.bg__primary{
+    background-color: $primary;
+}
+
+.text__primary{
+    color: $primary;
+}
+
+.invalid {
+  background-color: $disabled;
+  color: $white;
+  cursor: not-allowed;
+}

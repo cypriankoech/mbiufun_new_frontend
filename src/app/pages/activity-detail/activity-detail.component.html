@@ -1,0 +1,225 @@
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-20">
+  <!-- Activity Hero Header - Enhanced -->
+  <div class="relative bg-gradient-to-br from-[#70AEB9] via-[#4ECDC4] to-[#5ab4be] text-white overflow-hidden shadow-xl">
+    <!-- Animated Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <svg class="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dots" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+            <circle cx="5" cy="5" r="1.5" fill="white" opacity="0.15"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dots)"/>
+      </svg>
+    </div>
+
+    <!-- Floating Orbs for Visual Interest -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-20 right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="relative z-10 px-4 py-4">
+      <button
+        (click)="goBack()"
+        class="p-2.5 hover:bg-white/20 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-sm"
+        aria-label="Go back"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Hero Content - Enhanced -->
+    <div class="relative z-10 px-6 pb-10 pt-2" *ngIf="currentActivity">
+      <div class="max-w-md mx-auto text-center">
+        <!-- Activity Icon/Image with Glow Effect -->
+        <div class="relative inline-block mb-5">
+          <div class="absolute inset-0 bg-white/30 rounded-3xl blur-xl"></div>
+          <div class="relative w-24 h-24 mx-auto rounded-3xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-2xl border border-white/20 transform hover:scale-105 transition-transform duration-300">
+            <img
+              [src]="currentActivity.img_url"
+              [alt]="currentActivity.name"
+              class="w-14 h-14 object-contain drop-shadow-lg"
+              onerror="this.style.display='none'"
+            />
+            <div *ngIf="!currentActivity.img_url" class="w-14 h-14 rounded-2xl bg-gradient-to-br from-white/30 to-white/10 flex items-center justify-center">
+              <svg class="w-9 h-9 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Name with Better Typography -->
+        <h1 class="text-3xl font-extrabold mb-3 text-white drop-shadow-md tracking-tight">
+          {{ currentActivity.name }}
+        </h1>
+
+        <!-- Activity Meta - Redesigned -->
+        <div class="flex items-center justify-center gap-3 mb-5 flex-wrap">
+          <div class="flex items-center gap-2 bg-white/25 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/20">
+            <svg class="w-4 h-4 text-white/90" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-sm font-semibold text-white/95 capitalize">
+              {{ currentActivity.game_mode === 'non_competitive' ? 'Vibes' : 'Competitive' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Engaging Call-to-Action - Enhanced -->
+        <p class="text-white/90 text-sm leading-relaxed max-w-sm mx-auto font-medium drop-shadow-sm">
+          Share your moments and connect with the community! 🌟
+        </p>
+      </div>
+    </div>
+
+    <!-- Smoother Wave Transition -->
+    <div class="absolute bottom-0 left-0 w-full">
+      <svg viewBox="0 0 1440 80" class="w-full h-10 text-gray-50" fill="currentColor" preserveAspectRatio="none">
+        <path d="M0,40 C240,70 480,10 720,40 C960,70 1200,10 1440,40 L1440,80 L0,80 Z"></path>
+      </svg>
+    </div>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-4 py-8 space-y-8" *ngIf="currentActivity">
+    <!-- Offline Banner - Enhanced -->
+    <div
+      *ngIf="isOffline"
+      class="px-5 py-4 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 text-orange-900 flex items-center gap-4 shadow-lg animate-fadeIn"
+      role="alert"
+    >
+      <div class="flex-shrink-0 w-10 h-10 rounded-full bg-orange-200/50 flex items-center justify-center">
+        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+        </svg>
+      </div>
+      <div class="flex-1">
+        <p class="font-semibold text-sm">You're offline</p>
+        <p class="text-xs text-orange-700">Showing cached content only</p>
+      </div>
+    </div>
+
+    <!-- Post Composer - Enhanced Container -->
+    <div class="transform transition-all duration-300 hover:scale-[1.01]">
+      <app-post-composer
+        [activityId]="currentActivity?.id ?? null"
+        (postCreated)="onPostCreated()"
+      ></app-post-composer>
+    </div>
+
+    <!-- Section Divider -->
+    <div class="flex items-center gap-4 py-2" *ngIf="posts.length > 0">
+      <div class="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+      <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Community Posts</span>
+      <div class="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+    </div>
+
+    <!-- Empty State: No Posts - Enhanced -->
+    <div
+      *ngIf="!loading && posts.length === 0"
+      class="py-20 sm:py-24 text-center animate-fadeIn"
+    >
+      <div class="max-w-sm mx-auto px-4">
+        <!-- Animated Icon -->
+        <div class="relative inline-block mb-6">
+          <div class="absolute inset-0 bg-gradient-to-br from-[#70AEB9]/20 to-[#4ECDC4]/20 rounded-full blur-2xl animate-pulse"></div>
+          <div class="relative w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-[#70AEB9]/10 to-[#4ECDC4]/10 flex items-center justify-center border-4 border-[#70AEB9]/20">
+            <svg class="w-12 h-12 text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+        </div>
+        <h2 class="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">Be the First!</h2>
+        <p class="text-gray-600 text-base leading-relaxed mb-8">
+          No posts yet for <span class="font-semibold text-[#70AEB9]">{{ currentActivity.name }}</span>. 
+          Share your experience and ignite the conversation! 
+        </p>
+        <div class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#70AEB9]/10 to-[#4ECDC4]/10 rounded-full text-[#70AEB9] font-medium text-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+          </svg>
+          <span>Start something amazing!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts Feed - Enhanced Spacing & Animations -->
+    <div
+      *ngIf="posts.length > 0"
+      class="space-y-6 sm:space-y-8"
+      role="feed"
+      [attr.aria-busy]="loading"
+    >
+      <div
+        *ngFor="let post of posts; trackBy: trackByPostId; let i = index"
+        class="animate-fadeSlideIn transform transition-all duration-300 hover:scale-[1.01]"
+        [style.animation-delay]="(i * 50) + 'ms'"
+      >
+        <app-feed-card
+          [post]="post"
+          [hideActivityBadge]="true"
+          (comment)="onComment($event)"
+          (delete)="onDelete($event)"
+        ></app-feed-card>
+      </div>
+    </div>
+
+    <!-- Loading Spinner - Enhanced -->
+    <div
+      *ngIf="loading"
+      class="py-16 sm:py-20 flex justify-center"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="flex flex-col items-center gap-4">
+        <div class="relative">
+          <div class="absolute inset-0 bg-[#70AEB9]/20 rounded-full blur-xl animate-pulse"></div>
+          <svg class="relative animate-spin h-12 w-12 text-[#70AEB9]" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+            <path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <span class="text-gray-600 text-sm font-medium">Loading awesome content...</span>
+      </div>
+    </div>
+
+    <!-- Load More Button -->
+    <div
+      *ngIf="!loading && posts.length > 0 && hasMorePosts"
+      class="py-8 text-center"
+    >
+      <button
+        (click)="loadMorePosts()"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#70AEB9] to-[#4ECDC4] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+        <span>Load More Posts</span>
+      </button>
+    </div>
+
+    <!-- End of Feed Message - Enhanced -->
+    <div
+      *ngIf="!loading && posts.length > 0 && !hasMorePosts"
+      class="py-12 sm:py-14 text-center animate-fadeIn"
+    >
+      <div class="inline-flex flex-col items-center gap-3">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#70AEB9]/20 to-[#4ECDC4]/20 flex items-center justify-center">
+          <svg class="w-8 h-8 text-[#70AEB9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="space-y-1">
+          <p class="text-lg font-bold text-gray-900">You're All Caught Up!</p>
+          <p class="text-sm text-gray-600">Come back later for more amazing content 🎉</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
