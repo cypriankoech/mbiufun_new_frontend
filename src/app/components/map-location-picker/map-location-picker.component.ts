@@ -1,10 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { environment } from '@environments/environment';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { debounceTime, Subject, switchMap, of } from 'rxjs';
+import * as L from 'leaflet';
 
 interface LocationResult {
   name: string;
@@ -12,6 +12,15 @@ interface LocationResult {
   latitude: number;
   longitude: number;
   google_place_id: string;
+}
+
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  name?: string;
+  lat: string;
+  lon: string;
+  address?: { road?: string };
 }
 
 @Component({
@@ -75,7 +84,7 @@ interface LocationResult {
       <!-- Map Container -->
       <div class="flex-1 relative bg-gray-100 overflow-hidden">
         <div #mapContainer style="width: 100%; height: 100%;"></div>
-        
+
         <!-- Loading State -->
         <div *ngIf="loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
           <div class="text-center">
@@ -85,7 +94,7 @@ interface LocationResult {
         </div>
 
         <!-- Selected Location Info -->
-        <div *ngIf="selectedLocation" class="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200 z-10">
+        <div *ngIf="selectedLocation" class="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200" style="z-index: 1000;">
           <div class="flex items-start gap-3">
             <svg class="w-6 h-6 text-[#70AEB9] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -116,61 +125,85 @@ interface LocationResult {
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    :host ::ng-deep .leaflet-container {
+      font-family: inherit;
+    }
+  `]
 })
-export class MapLocationPickerComponent implements OnInit {
+export class MapLocationPickerComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
 
   private readonly http = inject(HttpClient);
   private readonly dialogRef = inject(MatDialogRef<MapLocationPickerComponent>);
-  
+  private readonly ngZone = inject(NgZone);
+
   searchQuery = '';
   searchResults: LocationResult[] = [];
   selectedLocation: LocationResult | null = null;
   loading = true;
 
-  private map: any;
-  private marker: any;
+  private map: L.Map | null = null;
+  private marker: L.Marker | null = null;
   private searchSubject = new Subject<string>();
+
+  private readonly markerIcon = L.divIcon({
+    className: '',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="30" height="45">
+      <path d="M12 0C5.383 0 0 5.383 0 12c0 8.489 10.664 22.13 11.128 22.697L12 36l.872-1.303C13.336 34.13 24 20.489 24 12 24 5.383 18.617 0 12 0z" fill="#70AEB9"/>
+      <circle cx="12" cy="12" r="5" fill="white"/>
+    </svg>`,
+    iconSize: [30, 45],
+    iconAnchor: [15, 45],
+    popupAnchor: [0, -45],
+  });
 
   ngOnInit(): void {
     this.setupSearch();
-    this.loadGoogleMaps();
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+    this.searchSubject.complete();
   }
 
   private setupSearch(): void {
     this.searchSubject.pipe(
       debounceTime(300),
       switchMap(query => {
-        if (!query || query.trim().length < 2) {
-          return of([]);
-        }
+        if (!query || query.trim().length < 2) return of([]);
         return this.searchLocations(query.trim());
       })
     ).subscribe({
-      next: (results) => {
-        this.searchResults = results;
-      },
-      error: (error) => {
-        console.error('Location search error:', error);
-        this.searchResults = [];
-      }
+      next: (results) => { this.searchResults = results; },
+      error: () => { this.searchResults = []; }
     });
   }
 
   private searchLocations(query: string) {
-    const token = localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')!).token?.access : '';
-    const headers = new HttpHeaders({
-      'mbiu-token': token || '',
-      'Authorization': `Bearer ${token}`
-    });
-    const params = new HttpParams().set('q', query);
-
-    return this.http.get<{ data: LocationResult[] }>(
-      `${environment.apiUrl}v1/games/location/search/`,
-      { headers, params }
+    const params = new HttpParams()
+      .set('q', query)
+      .set('format', 'json')
+      .set('limit', '6')
+      .set('addressdetails', '1');
+    return this.http.get<NominatimResult[]>(
+      'https://nominatim.openstreetmap.org/search',
+      { params }
     ).pipe(
-      switchMap(response => of(response.data || []))
+      switchMap(results => of(results.map(r => ({
+        name: r.name || r.display_name.split(',')[0],
+        address: r.display_name,
+        latitude: parseFloat(r.lat),
+        longitude: parseFloat(r.lon),
+        google_place_id: String(r.place_id),
+      }))))
     );
   }
 
@@ -182,86 +215,66 @@ export class MapLocationPickerComponent implements OnInit {
     this.selectedLocation = result;
     this.searchResults = [];
     this.searchQuery = result.name;
-    
-    // Center map on selected location
     if (this.map) {
-      const position = { lat: result.latitude, lng: result.longitude };
-      this.map.setCenter(position);
-      this.map.setZoom(15);
-      this.updateMarker(position);
+      const latLng = L.latLng(result.latitude, result.longitude);
+      this.map.setView(latLng, 15);
+      this.placeMarker(latLng);
     }
-  }
-
-  private loadGoogleMaps(): void {
-    // Check if Google Maps is already loaded
-    if ((window as any).google && (window as any).google.maps) {
-      this.initMap();
-      return;
-    }
-
-    // Load Google Maps script
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDHOLlO8S5MhLlJLk23yCR0b6o0iLwgGZ0&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => this.initMap();
-    script.onerror = () => {
-      this.loading = false;
-      console.error('Failed to load Google Maps');
-    };
-    document.head.appendChild(script);
   }
 
   private initMap(): void {
-    setTimeout(() => {
-      const defaultPosition = { lat: -1.2921, lng: 36.8219 }; // Nairobi, Kenya
-      
-      this.map = new (window as any).google.maps.Map(this.mapContainer.nativeElement, {
-        center: defaultPosition,
-        zoom: 12,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-      });
+    const defaultLatLng = L.latLng(-1.2921, 36.8219); // Nairobi, Kenya
 
-      // Add click listener to map
-      this.map.addListener('click', (event: any) => {
-        const position = {
-          lat: event.latLng.lat(),
-          lng: event.latLng.lng()
-        };
-        this.updateMarker(position);
-        this.reverseGeocode(position);
-      });
-
-      this.loading = false;
-    }, 100);
-  }
-
-  private updateMarker(position: { lat: number; lng: number }): void {
-    if (this.marker) {
-      this.marker.setMap(null);
-    }
-
-    this.marker = new (window as any).google.maps.Marker({
-      position: position,
-      map: this.map,
-      animation: (window as any).google.maps.Animation.DROP,
+    this.map = L.map(this.mapContainer.nativeElement, {
+      center: defaultLatLng,
+      zoom: 12,
+      zoomControl: true,
     });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(this.map);
+
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      this.ngZone.run(() => {
+        this.placeMarker(e.latlng);
+        this.reverseGeocode(e.latlng);
+      });
+    });
+
+    this.loading = false;
   }
 
-  private reverseGeocode(position: { lat: number; lng: number }): void {
-    const geocoder = new (window as any).google.maps.Geocoder();
-    
-    geocoder.geocode({ location: position }, (results: any[], status: string) => {
-      if (status === 'OK' && results[0]) {
-        const place = results[0];
+  private placeMarker(latlng: L.LatLng): void {
+    if (this.marker) {
+      this.marker.setLatLng(latlng);
+    } else {
+      this.marker = L.marker(latlng, { icon: this.markerIcon }).addTo(this.map!);
+    }
+  }
+
+  private reverseGeocode(latlng: L.LatLng): void {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json`;
+    this.http.get<NominatimResult>(url).subscribe({
+      next: (result) => {
+        if (result?.display_name) {
+          this.selectedLocation = {
+            name: result.name || result.address?.road || result.display_name.split(',')[0],
+            address: result.display_name,
+            latitude: latlng.lat,
+            longitude: latlng.lng,
+            google_place_id: String(result.place_id ?? ''),
+          };
+        }
+      },
+      error: () => {
         this.selectedLocation = {
-          name: place.formatted_address.split(',')[0],
-          address: place.formatted_address,
-          latitude: position.lat,
-          longitude: position.lng,
-          google_place_id: place.place_id
+          name: `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`,
+          address: `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`,
+          latitude: latlng.lat,
+          longitude: latlng.lng,
+          google_place_id: '',
         };
       }
     });
@@ -277,4 +290,3 @@ export class MapLocationPickerComponent implements OnInit {
     this.dialogRef.close(null);
   }
 }
-
